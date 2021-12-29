@@ -1,6 +1,6 @@
 FROM openjdk:11
 
-ARG PINOT_VERSION=0.9.0
+ARG PINOT_VERSION=0.10.0
 
 COPY apache-pinot-${PINOT_VERSION}-bin.tar.gz /
 COPY hadoop-2.7.0.tar /
