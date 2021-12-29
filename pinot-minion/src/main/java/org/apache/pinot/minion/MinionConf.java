@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.CommonConstants;
-import org.apache.pinot.spi.utils.NetUtils;
-
 
 public class MinionConf extends PinotConfiguration {
   public static final String END_REPLACE_SEGMENTS_TIMEOUT_MS_KEY = "pinot.minion.endReplaceSegments.timeoutMs";
@@ -43,13 +41,6 @@ public class MinionConf extends PinotConfiguration {
 
   public String getZkAddress() {
     return getProperty(CommonConstants.Helix.CONFIG_OF_ZOOKEEPR_SERVER);
-  }
-
-  public String getHostName()
-      throws Exception {
-    return getProperty(CommonConstants.Helix.KEY_OF_MINION_HOST,
-        getProperty(CommonConstants.Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false) ? NetUtils
-            .getHostnameOrAddress() : NetUtils.getHostAddress());
   }
 
   public int getPort() {

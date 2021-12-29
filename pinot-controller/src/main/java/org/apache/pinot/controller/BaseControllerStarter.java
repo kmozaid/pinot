@@ -209,7 +209,12 @@ public abstract class BaseControllerStarter implements ServiceStartable {
 
   private void inferHostnameIfNeeded(ControllerConf config) {
     if (config.getControllerHost() == null) {
-      if (config.getProperty(CommonConstants.Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false)) {
+      if (config.getProperty(CommonConstants.Helix.SET_INSTANCE_ID_BY_ENV, false)) {
+        final String hostName = System.getenv("PINOT_HOST_ID");
+        if (hostName != null) {
+          config.setControllerHost(hostName);
+        }
+      } else if (config.getProperty(CommonConstants.Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false)) {
         final String inferredHostname = NetUtils.getHostnameOrAddress();
         if (inferredHostname != null) {
           config.setControllerHost(inferredHostname);

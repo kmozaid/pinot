@@ -97,7 +97,7 @@ $ git clone https://github.com/apache/pinot.git
 $ cd pinot
 
 # Build Pinot
-$ mvn clean install -DskipTests -Pbin-dist
+$ mvn clean install -DskipTests -Pbin-dist -Denforcer.skip=true
 
 # Run the Quick Demo
 $ cd pinot-distribution/target/apache-pinot-<version>-SNAPSHOT-bin/apache-pinot-<version>-SNAPSHOT-bin

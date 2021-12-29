@@ -143,9 +143,16 @@ public abstract class BaseServerStarter implements ServiceStartable {
 
     setupHelixSystemProperties();
     _listenerConfigs = ListenerConfigUtil.buildServerAdminConfigs(_serverConf);
-    _hostname = _serverConf.getProperty(Helix.KEY_OF_SERVER_NETTY_HOST,
-        _serverConf.getProperty(Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false) ? NetUtils.getHostnameOrAddress()
-            : NetUtils.getHostAddress());
+    if (_serverConf.getProperty(Helix.SET_INSTANCE_ID_BY_ENV, false)) {
+      _hostname = System.getenv("PINOT_HOST_ID");
+      if (_hostname == null) {
+        throw new Exception("can't get PINOT_HOST_ID from env");
+      }
+    } else {
+      _hostname = _serverConf.getProperty(Helix.KEY_OF_SERVER_NETTY_HOST,
+              _serverConf.getProperty(Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false) ? NetUtils.getHostnameOrAddress()
+                      : NetUtils.getHostAddress());
+    }
     _port = _serverConf.getProperty(Helix.KEY_OF_SERVER_NETTY_PORT, Helix.DEFAULT_SERVER_NETTY_PORT);
 
     _instanceId = _serverConf.getProperty(Server.CONFIG_OF_INSTANCE_ID);

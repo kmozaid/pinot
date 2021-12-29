@@ -58,6 +58,7 @@ import org.apache.pinot.spi.metrics.PinotMetricsRegistry;
 import org.apache.pinot.spi.services.ServiceRole;
 import org.apache.pinot.spi.services.ServiceStartable;
 import org.apache.pinot.spi.utils.CommonConstants;
+import org.apache.pinot.spi.utils.NetUtils;
 import org.apache.pinot.sql.parsers.rewriter.QueryRewriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +91,16 @@ public abstract class BaseMinionStarter implements ServiceStartable {
     ServiceStartableUtils.applyClusterConfig(_config, zkAddress, helixClusterName, ServiceRole.MINION);
 
     setupHelixSystemProperties();
-    _hostname = _config.getHostName();
+    if (_config.getProperty(CommonConstants.Helix.SET_INSTANCE_ID_BY_ENV, false)) {
+      _hostname = System.getenv("PINOT_HOST_ID");
+      if (_hostname == null) {
+        throw new Exception("can't get PINOT_HOST_ID from env");
+      }
+    } else {
+      _hostname = _config.getProperty(CommonConstants.Helix.KEY_OF_MINION_HOST,
+              _config.getProperty(CommonConstants.Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false) ? NetUtils
+                      .getHostnameOrAddress() : NetUtils.getHostAddress());
+    }
     _port = _config.getPort();
     _instanceId = _config.getInstanceId();
     if (_instanceId != null) {

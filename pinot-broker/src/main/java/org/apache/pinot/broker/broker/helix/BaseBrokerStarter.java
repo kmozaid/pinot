@@ -116,7 +116,12 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     setupHelixSystemProperties();
     _listenerConfigs = ListenerConfigUtil.buildBrokerConfigs(brokerConf);
     _hostname = brokerConf.getProperty(Broker.CONFIG_OF_BROKER_HOSTNAME);
-    if (_hostname == null) {
+    if (_brokerConf.getProperty(Helix.SET_INSTANCE_ID_BY_ENV, false)) {
+      _hostname = System.getenv("PINOT_HOST_ID");
+      if (_hostname == null) {
+        throw new Exception("can't get PINOT_HOST_ID from env");
+      }
+    } else {
       _hostname =
           _brokerConf.getProperty(Helix.SET_INSTANCE_ID_TO_HOSTNAME_KEY, false) ? NetUtils.getHostnameOrAddress()
               : NetUtils.getHostAddress();
