@@ -1,89 +1,50 @@
-#
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-#
-ARG JAVA_VERSION=11
-ARG OPENJDK_IMAGE=openjdk
-FROM ${OPENJDK_IMAGE}:${JAVA_VERSION} AS pinot_build_env
+FROM openjdk:11
 
-LABEL MAINTAINER=dev@pinot.apache.org
+ARG PINOT_VERSION=0.9.0
 
-ARG PINOT_BRANCH=master
-ARG KAFKA_VERSION=2.0
-ARG JDK_VERSION=11
-ARG PINOT_GIT_URL="https://github.com/apache/incubator-pinot.git"
-RUN echo "Trying to build Pinot from [ ${PINOT_GIT_URL} ] on branch [ ${PINOT_BRANCH} ] with Kafka version [ ${KAFKA_VERSION} ]"
-ENV PINOT_HOME=/opt/pinot
-ENV PINOT_BUILD_DIR=/opt/pinot-build
+COPY apache-pinot-${PINOT_VERSION}-bin.tar.gz /
+COPY hadoop-2.7.0.tar /
+COPY agent.tar /
+COPY conf.tar /
+RUN mkdir /opt/cisco && \
+    mkdir /var/log/pinot && \
+    mkdir -p /vdb/tmp && \
+    mkdir -p /var/log/pinot/minion && \
+    mkdir -p /var/log/pinot/server && \
+    mkdir -p /var/log/pinot/controller && \
+    mkdir -p /var/log/pinot/broker && \
+    mkdir -p /vdb/pinot/controller && \
+    mkdir -p /vdb/pinot/broker && \
+    mkdir -p /vdb/pinot/server/data && \
+    mkdir -p /vdb/pinot/server/segments && \
+    echo '* hard nofile 102400' >> /etc/security/limits.conf && \
+    echo '* soft nofile 102400' >> /etc/security/limits.conf && \
+    tar xvf /apache-pinot-${PINOT_VERSION}-bin.tar.gz -C /opt/cisco && \
+    tar xvf /hadoop-2.7.0.tar -C /opt/cisco && \
+    tar xvf /agent.tar -C /opt/cisco/apache-pinot-${PINOT_VERSION}-bin && \
+    rm -rf /opt/cisco/apache-pinot-${PINOT_VERSION}-bin/conf && \
+    tar xvf /conf.tar -C /opt/cisco/apache-pinot-${PINOT_VERSION}-bin && \
+    rm /apache-pinot-${PINOT_VERSION}-bin.tar.gz && \
+    rm /hadoop-2.7.0.tar && \
+    rm /agent.tar && \
+    rm /conf.tar && \
+    apt-get update -y && \
+    apt-get install vim -y && \
+    apt-get install net-tools -y && \
+    apt-get install telnet -y
 
-# extra dependency for running launcher
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends vim wget curl git automake bison flex g++ libboost-all-dev libevent-dev libssl-dev libtool make pkg-config && \
-    rm -rf /var/lib/apt/lists/*
+ENV HADOOP_HOME /opt/cisco/hadoop-2.7.0
+ENV HADOOP_VERSION 2.7.0
+ENV CLASSPATH_PREFIX ${HADOOP_HOME}/share/hadoop/hdfs/hadoop-hdfs-${HADOOP_VERSION}.jar:${HADOOP_HOME}/share/hadoop/common/lib/hadoop-annotations-${HADOOP_VERSION}.jar:${HADOOP_HOME}/share/hadoop/common/lib/hadoop-auth-${HADOOP_VERSION}.jar:${HADOOP_HOME}/share/hadoop/common/hadoop-common-${HADOOP_VERSION}.jar:${HADOOP_HOME}/share/hadoop/common/lib/guava-11.0.2.jar:${HADOOP_HOME}/share/hadoop/common/lib/gson-2.2.4.jar:${HADOOP_HOME}/share/hadoop/hdfs/lib/htrace-core-3.1.0-incubating.jar
+ENV JAVA_OPTS ${JAVA_OPTS}
+ENV PINOT_HOST_ID ${PINOT_HOST_ID}
+ENV PINOT_VERSION ${PINOT_VERSION}
 
-# install maven
-RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
-  && wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -P /tmp \
-  && tar -xzf /tmp/apache-maven-*.tar.gz -C /usr/share/maven --strip-components=1 \
-  && rm -f /tmp/apache-maven-*.tar.gz \
-  && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-ENV MAVEN_HOME /usr/share/maven
-ENV MAVEN_CONFIG /opt/.m2
+# expose ports for controller/broker/server/minion/admin
+# controller 9000, controller jmx 9066
+# broker 8099, broker jmx 9067
+# server 8098, controller jmx 9068
+# minion 8097, minion jmx 9069, minion adminapi 6500
+EXPOSE 9000 9066 8099 9067 8098 9068 8097 9069 6500 8096
 
-# install thrift
-RUN  wget http://archive.apache.org/dist/thrift/0.12.0/thrift-0.12.0.tar.gz -O /tmp/thrift-0.12.0.tar.gz && \
-     tar xfz /tmp/thrift-0.12.0.tar.gz --directory /tmp && \
-     base_dir=`pwd` && \
-     cd /tmp/thrift-0.12.0 && \
-     ./configure --with-cpp=no --with-c_glib=no --with-java=yes --with-python=no --with-ruby=no --with-erlang=no --with-go=no --with-nodejs=no --with-php=no && \
-     make install
-
-RUN git clone ${PINOT_GIT_URL} ${PINOT_BUILD_DIR} && \
-    cd ${PINOT_BUILD_DIR} && \
-    git checkout ${PINOT_BRANCH} && \
-    mvn install package -DskipTests -Pbin-dist -Pbuild-shaded-jar -Dkafka.version=${KAFKA_VERSION} -Djdk.version=${JDK_VERSION} && \
-    mkdir -p ${PINOT_HOME}/configs && \
-    mkdir -p ${PINOT_HOME}/data && \
-    cp -r pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/* ${PINOT_HOME}/. && \
-    chmod +x ${PINOT_HOME}/bin/*.sh
-
-FROM ${OPENJDK_IMAGE}:${JAVA_VERSION}-jdk-slim
-
-LABEL MAINTAINER=dev@pinot.apache.org
-
-ENV PINOT_HOME=/opt/pinot
-ENV JAVA_OPTS="-Xms4G -Xmx4G -Dpinot.admin.system.exit=false"
-
-VOLUME ["${PINOT_HOME}/configs", "${PINOT_HOME}/data"]
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends vim wget curl git python && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=pinot_build_env ${PINOT_HOME} ${PINOT_HOME}
-COPY bin ${PINOT_HOME}/bin
-COPY etc ${PINOT_HOME}/etc
-COPY examples ${PINOT_HOME}/examples
-
-# expose ports for controller/broker/server/admin
-EXPOSE 9000 8099 8098 8097 8096
-
-WORKDIR ${PINOT_HOME}
-
-ENTRYPOINT ["./bin/pinot-admin.sh"]
-
-CMD ["-help"]
+ENTRYPOINT ["sh", "-c", "/opt/cisco/apache-pinot-${PINOT_VERSION}-bin/bin/pinot-admin.sh ${Component} -configFileName ${CONFIG_FILE} ${ZK}"]

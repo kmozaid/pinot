@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<Configuration>
+  <Appenders>
+    <Console name="console" target="SYSTEM_OUT">
+      <PatternLayout>
+        <pattern>%d{yyyy/MM/dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</pattern>
+      </PatternLayout>
+    </Console>
+    <RollingFile name="brokerLog" fileName="/var/log/pinot/broker/pinot-broker.log"
+                 filePattern="/var/log/pinot/broker/$${date:yyyy-MM}/pinot-broker-%d{MM-dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <OnStartupTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="100 MB"/>
+        <TimeBasedTriggeringPolicy/>
+      </Policies>
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+      <DefaultRolloverStrategy>
+        <Delete basePath="/var/log/pinot/broker/" maxDepth="2">
+          <IfFileName glob="*/*.log.gz" />
+          <IfLastModified age="7d" />
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingFile>
+      <RollingFile name="SlowQueryLog" fileName="/var/log/pinot/broker/metrics/broker-slow-query.log"
+                   filePattern="/var/log/pinot/broker/metrics/$${date:yyyy-MM}/broker-slow-query-%d{MM-dd}-%i.log.gz" immediateFlush="false">
+          <JsonLayout compact="true" locationInfo="true" complete="false" eventEol="true" objectMessageAsJsonObject="true" >
+              <KeyValuePair key="timestamp" value="$${date:yyyy-MM-dd-HH:mm:ss.SSSSS}"/>
+          </JsonLayout>
+          <Policies>
+              <OnStartupTriggeringPolicy/>
+              <SizeBasedTriggeringPolicy size="250 MB"/>
+              <TimeBasedTriggeringPolicy/>
+              <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+          </Policies>
+          <DefaultRolloverStrategy>
+              <Delete basePath="/var/log/pinot/" maxDepth="2">
+                  <IfFileName glob="*/*.log.gz" />
+                  <IfLastModified age="7d" />
+              </Delete>
+          </DefaultRolloverStrategy>
+      </RollingFile>
+  </Appenders>
+  <Loggers>
+    <Root level="warn" additivity="false">
+      <!-- Direct most logs to the log file -->
+      <AppenderRef ref="brokerLog"/>
+    </Root>
+    <!-- Output broker starter logs to the console -->
+    <Logger name="org.apache.pinot.broker.broker.helix.HelixBrokerStarter" level="warn" additivity="false">
+      <AppenderRef ref="console"/>
+    </Logger>
+      <Logger name="SlowQueryMetrics" level="info" additivity="false">
+          <AppenderRef ref="SlowQueryLog"/>
+      </Logger>
+    <AsyncLogger name="org.reflections" level="error" additivity="false"/>
+  </Loggers>
+</Configuration>
