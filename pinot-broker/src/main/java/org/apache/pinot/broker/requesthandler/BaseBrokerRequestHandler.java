@@ -41,6 +41,10 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+import org.apache.logging.log4j.message.ObjectMessage;
 import org.apache.pinot.broker.api.RequestStatistics;
 import org.apache.pinot.broker.api.RequesterIdentity;
 import org.apache.pinot.broker.broker.AccessControlFactory;
@@ -103,6 +107,9 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseBrokerRequestHandler.class);
+  private static final org.apache.logging.log4j.Logger SLOW_QUERY_LOGGER = LogManager.getLogger("SlowQueryMetrics");
+
+  private final static Marker MARKER_WHITESPACE = MarkerManager.getMarker("WAP_SLOW_QUERY");
   private static final String IN_SUBQUERY = "inSubquery";
   private static final Expression FALSE = RequestUtils.getLiteralExpression(false);
   private static final Expression TRUE = RequestUtils.getLiteralExpression(true);
@@ -130,6 +137,7 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
   private final int _defaultHllLog2m;
   private final boolean _enableQueryLimitOverride;
   private final boolean _enableDistinctCountBitmapOverride;
+  private final int _brokerSlowQueryThresholdMs;
 
   public BaseBrokerRequestHandler(PinotConfiguration config, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
@@ -149,6 +157,9 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
 
     _brokerId = config.getProperty(Broker.CONFIG_OF_BROKER_ID, getDefaultBrokerId());
     _brokerTimeoutMs = config.getProperty(Broker.CONFIG_OF_BROKER_TIMEOUT_MS, Broker.DEFAULT_BROKER_TIMEOUT_MS);
+    //WAP soldier : add configable slow query threshold 2021-11-24
+    _brokerSlowQueryThresholdMs = config.getProperty(Broker.CONFIG_OF_BROKER_SLOW_QUERY_THRESHOLD_MS,
+            Broker.DEFAULT_BROKER_SLOW_QUERY_THRESHOLD_MS);
     _queryResponseLimit =
         config.getProperty(Broker.CONFIG_OF_BROKER_QUERY_RESPONSE_LIMIT, Broker.DEFAULT_BROKER_QUERY_RESPONSE_LIMIT);
     _queryLogLength =
@@ -591,7 +602,11 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
           brokerResponse.getOfflineResponseSerializationCpuTimeNs(), brokerResponse.getRealtimeTotalCpuTimeNs(),
           brokerResponse.getRealtimeThreadCpuTimeNs(), brokerResponse.getRealtimeSystemActivitiesCpuTimeNs(),
           brokerResponse.getRealtimeResponseSerializationCpuTimeNs(), StringUtils.substring(query, 0, _queryLogLength));
-
+        //WAP soldier : add configable slow query threshold 2021-11-24
+        if (totalTimeMs > _brokerSlowQueryThresholdMs) {
+            logSlowQuery(requestId, query, requestStatistics, brokerRequest, numUnavailableSegments,
+                    serverStats.getServerStats(), brokerResponse, totalTimeMs);
+        }
       // Limit the dropping log message at most once per second.
       if (_numDroppedLogRateLimiter.tryAcquire()) {
         // NOTE: the reported number may not be accurate since we will be missing some increments happened between
@@ -608,7 +623,35 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
       _numDroppedLog.incrementAndGet();
     }
   }
-
+    private void logSlowQuery(long requestId, String query, RequestStatistics requestStatistics,
+                              BrokerRequest brokerRequest, int numUnavailableSegments, String serverStats,
+                              BrokerResponseNative brokerResponse, long totalTimeMs) {
+        Map<String, Object> map = new HashMap();
+        map.put("requestId", requestId);
+        map.put("table", brokerRequest.getQuerySource().getTableName());
+        map.put("timeMs", totalTimeMs);
+        map.put("TotalDocs", brokerResponse.getTotalDocs());
+        map.put("ScannedDocs", brokerResponse.getNumDocsScanned());
+        map.put("NumEntriesScannedInFilter", brokerResponse.getNumEntriesScannedInFilter());
+        map.put("NumEntriesScannedPostFilter", brokerResponse.getNumEntriesScannedPostFilter());
+        map.put("NumSegmentsQueried", brokerResponse.getNumSegmentsQueried());
+        map.put("NumSegmentsProcessed", brokerResponse.getNumSegmentsProcessed());
+        map.put("NumSegmentsMatched", brokerResponse.getNumSegmentsMatched());
+        map.put("NumConsumingSegmentsQueried", brokerResponse.getNumConsumingSegmentsQueried());
+        map.put("numUnavailableSegments", numUnavailableSegments);
+        map.put("MinConsumingFreshnessTimeMs", brokerResponse.getMinConsumingFreshnessTimeMs());
+        map.put("NumServersResponded", brokerResponse.getNumServersResponded());
+        map.put("NumServersQueried", brokerResponse.getNumServersQueried());
+        map.put("isNumGroupsLimitReached", brokerResponse.isNumGroupsLimitReached());
+        map.put("ReduceTimeMillis", requestStatistics.getReduceTimeMillis());
+        map.put("ExceptionsSize", brokerResponse.getExceptionsSize());
+        map.put("ServerStats", serverStats);
+        map.put("offlineThreadCpuTimeNs", brokerResponse.getOfflineThreadCpuTimeNs());
+        map.put("realtimeThreadCpuTimeNs", brokerResponse.getRealtimeThreadCpuTimeNs());
+        map.put("query", StringUtils.substring(query, 0, _queryLogLength));
+        ObjectMessage msg = new ObjectMessage(map);
+        SLOW_QUERY_LOGGER.info(MARKER_WHITESPACE, msg);
+    }
   private String getServerTenant(String tableNameWithType) {
     TableConfig tableConfig = _tableCache.getTableConfig(tableNameWithType);
     if (tableConfig == null) {
