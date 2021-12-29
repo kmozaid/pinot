@@ -20,40 +20,61 @@
 
 -->
 <Configuration>
-  <Appenders>
-    <Console name="console" target="SYSTEM_OUT">
-      <PatternLayout>
-        <pattern>%d{yyyy/MM/dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</pattern>
-      </PatternLayout>
-    </Console>
-    <RollingFile name="controllerLog" fileName="/var/log/pinot/controller/pinot-controller.log"
-                 filePattern="/var/log/pinot/controller/$${date:yyyy-MM}/pinot-controller-%d{MM-dd}-%i.log.gz">
-      <PatternLayout>
-        <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</Pattern>
-      </PatternLayout>
-      <Policies>
-        <OnStartupTriggeringPolicy/>
-        <SizeBasedTriggeringPolicy size="100 MB"/>
-        <TimeBasedTriggeringPolicy/>
-      </Policies>
-      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
-      <DefaultRolloverStrategy>
-        <Delete basePath="/var/log/pinot/controller/" maxDepth="2">
-          <IfFileName glob="*/*.log.gz" />
-          <IfLastModified age="7d" />
-        </Delete>
-      </DefaultRolloverStrategy>
-    </RollingFile>
-  </Appenders>
-  <Loggers>
-    <Root level="warn" additivity="false">
-      <!-- Direct most logs to the log file -->
-      <AppenderRef ref="controllerLog"/>
-    </Root>
-    <!-- Output controller starter logs to the console -->
-    <Logger name="org.apache.pinot.controller.ControllerStarter" level="warn" additivity="false">
-      <AppenderRef ref="console"/>
-    </Logger>
-    <AsyncLogger name="org.reflections" level="error" additivity="false"/>
-  </Loggers>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout>
+                <pattern>%d{yyyy/MM/dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</pattern>
+            </PatternLayout>
+        </Console>
+        <RollingFile name="controllerLog" fileName="/var/log/pinot/controller/pinot-controller.log"
+                     filePattern="/var/log/pinot/controller/$${date:yyyy-MM}/pinot-controller-%d{MM-dd}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%c{1}] [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy/>
+                <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="/var/log/pinot/" maxDepth="2">
+                    <IfFileName glob="*/*.log.gz" />
+                    <IfLastModified age="7d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+        <RollingFile name="WAPAuditLog" fileName="/var/log/pinot/controller/metrics/controller-audit.log"
+                     filePattern="/var/log/pinot/controller/metrics/$${date:yyyy-MM}/controller-audit-%d{MM-dd}-%i.log.gz" immediateFlush="true">
+            <JsonLayout compact="true" locationInfo="true" complete="false" eventEol="true" objectMessageAsJsonObject="true" >
+                <KeyValuePair key="timestamp" value="$${date:yyyy-MM-dd-HH:mm:ss.SSSSS}"/>
+            </JsonLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+                <TimeBasedTriggeringPolicy/>
+                <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="/var/log/pinot/" maxDepth="2">
+                    <IfFileName glob="*/*.log.gz" />
+                    <IfLastModified age="7d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="warn" additivity="false">
+            <!-- Direct most logs to the log file -->
+            <AppenderRef ref="controllerLog"/>
+        </Root>
+        <!-- Output controller starter logs to the console -->
+        <Logger name="org.apache.pinot.controller.ControllerStarter" level="warn" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Logger name="WAPAuditLog" level="info" additivity="false">
+            <AppenderRef ref="WAPAuditLog"/>
+        </Logger>
+        <AsyncLogger name="org.reflections" level="error" additivity="false"/>
+    </Loggers>
 </Configuration>
