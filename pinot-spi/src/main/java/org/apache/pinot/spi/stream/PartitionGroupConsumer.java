@@ -38,5 +38,5 @@ public interface PartitionGroupConsumer extends Closeable {
    * @return An iterable containing messages fetched from the stream partition and their offsets
    */
   MessageBatch fetchMessages(StreamPartitionMsgOffset startOffset, StreamPartitionMsgOffset endOffset, int timeoutMs)
-      throws TimeoutException;
+      throws TimeoutException, InvalidPinotOffsetException;
 }

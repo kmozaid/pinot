@@ -56,6 +56,7 @@ public abstract class KafkaPartitionLevelConnectionHandler {
     consumerProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, _config.getBootstrapHosts());
     consumerProp.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     consumerProp.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, BytesDeserializer.class.getName());
+    consumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "none");
     if (_config.getKafkaIsolationLevel() != null) {
       consumerProp.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, _config.getKafkaIsolationLevel());
     }
