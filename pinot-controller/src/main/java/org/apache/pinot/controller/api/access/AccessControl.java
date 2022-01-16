@@ -55,6 +55,7 @@ public interface AccessControl {
     return true;
   }
 
+
   /**
    * Return whether the client has permission to access the endpoints with are not table level
    *
@@ -64,6 +65,10 @@ public interface AccessControl {
    * @return whether the client has permission
    */
   default boolean hasAccess(AccessType accessType, HttpHeaders httpHeaders, String endpointUrl) {
+    return true;
+  }
+
+  default  boolean hasAccess(HttpHeaders httpHeaders) {
     return true;
   }
 

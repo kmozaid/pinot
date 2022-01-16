@@ -18,16 +18,19 @@
  */
 package org.apache.pinot.controller.api.access;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.HttpHeaders;
+import org.apache.helix.ZNRecord;
+import org.apache.helix.store.zk.ZkHelixPropertyStore;
+import org.apache.pinot.common.utils.helix.UserCache;
 import org.apache.pinot.core.auth.BasicAuthPrincipal;
 import org.apache.pinot.core.auth.BasicAuthUtils;
-import org.apache.pinot.spi.env.PinotConfiguration;
+import org.apache.pinot.spi.config.user.ComponentType;
+import org.apache.pinot.spi.config.user.RoleType;
 
 
 /**
@@ -50,8 +53,16 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
 
   private AccessControl _accessControl;
 
-  public void init(PinotConfiguration configuration) {
-    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(configuration, PREFIX));
+//  public void init(PinotConfiguration configuration) {
+//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(configuration, PREFIX));
+//  }
+
+  @Override
+  public void init(ZkHelixPropertyStore<ZNRecord> _propertyStore) {
+//    _userCache = new UserCache(_propertyStore);
+//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(_propertyStore));
+//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(new UserCache(_propertyStore));
+    _accessControl = new BasicAuthAccessControl(new UserCache(_propertyStore));
   }
 
   @Override
@@ -63,10 +74,12 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
    * Access Control using header-based basic http authentication
    */
   private static class BasicAuthAccessControl implements AccessControl {
-    private final Map<String, BasicAuthPrincipal> _token2principal;
+    private  Map<String, BasicAuthPrincipal> _token2principal;
+    private final UserCache _userCache;
 
-    public BasicAuthAccessControl(Collection<BasicAuthPrincipal> principals) {
-      _token2principal = principals.stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
+    public BasicAuthAccessControl(UserCache userCache) {
+      _userCache = userCache;
+//      _token2principal = principals.stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
     }
 
     @Override
@@ -90,19 +103,27 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
       return getPrincipal(httpHeaders).isPresent();
     }
 
+    @Override
+    public boolean hasAccess(HttpHeaders httpHeaders) {
+      return getPrincipal(httpHeaders)
+              .filter(p -> p.hasPermission(RoleType.ADMIN, ComponentType.CONTROLLER)).isPresent();
+    }
+
     private Optional<BasicAuthPrincipal> getPrincipal(HttpHeaders headers) {
       if (headers == null) {
         return Optional.empty();
       }
-
+      _token2principal = BasicAuthUtils.extractBasicAuthPrincipals(_userCache.getAllControllerUserConfig())
+              .stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
       List<String> authHeaders = headers.getRequestHeader(HEADER_AUTHORIZATION);
       if (authHeaders == null) {
         return Optional.empty();
       }
 
       return authHeaders.stream().map(BasicAuthUtils::normalizeBase64Token).map(_token2principal::get)
-          .filter(Objects::nonNull).findFirst();
+              .filter(Objects::nonNull).findFirst();
     }
+
 
     @Override
     public AuthWorkflowInfo getAuthWorkflowInfo() {

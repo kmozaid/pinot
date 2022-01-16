@@ -18,6 +18,8 @@
  */
 package org.apache.pinot.broker.broker;
 
+import org.apache.helix.ZNRecord;
+import org.apache.helix.store.zk.ZkHelixPropertyStore;
 import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.slf4j.Logger;
@@ -29,10 +31,12 @@ public abstract class AccessControlFactory {
   public static final String ACCESS_CONTROL_CLASS_CONFIG = "class";
 
   public abstract void init(PinotConfiguration confguration);
+  public abstract void init(ZkHelixPropertyStore<ZNRecord> _propertyStore);
+
 
   public abstract AccessControl create();
 
-  public static AccessControlFactory loadFactory(PinotConfiguration configuration) {
+  public static AccessControlFactory loadFactory(PinotConfiguration configuration, ZkHelixPropertyStore<ZNRecord> _propertyStore) {
     AccessControlFactory accessControlFactory;
     String accessControlFactoryClassName = configuration.getProperty(ACCESS_CONTROL_CLASS_CONFIG);
     if (accessControlFactoryClassName == null) {
@@ -42,7 +46,7 @@ public abstract class AccessControlFactory {
       LOGGER.info("Instantiating Access control factory class {}", accessControlFactoryClassName);
       accessControlFactory = (AccessControlFactory) Class.forName(accessControlFactoryClassName).newInstance();
       LOGGER.info("Initializing Access control factory class {}", accessControlFactoryClassName);
-      accessControlFactory.init(configuration);
+      accessControlFactory.init(_propertyStore);
       return accessControlFactory;
     } catch (Exception e) {
       throw new RuntimeException(e);
