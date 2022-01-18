@@ -24,13 +24,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.helix.ZNRecord;
-import org.apache.helix.store.zk.ZkHelixPropertyStore;
 import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.api.HttpRequesterIdentity;
 import org.apache.pinot.broker.api.RequesterIdentity;
 import org.apache.pinot.common.request.BrokerRequest;
-import org.apache.pinot.common.utils.helix.UserCache;
 import org.apache.pinot.core.auth.BasicAuthPrincipal;
 import org.apache.pinot.core.auth.BasicAuthUtils;
 import org.apache.pinot.spi.env.PinotConfiguration;
@@ -58,16 +55,10 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
     // left blank
   }
 
-  @Override
   public void init(PinotConfiguration configuration) {
+    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(configuration, PREFIX));
   }
 
-  @Override
-  public void init(ZkHelixPropertyStore<ZNRecord> propertyStore) {
-    _accessControl = new BasicAuthAccessControl(new UserCache(propertyStore));
-  }
-
-  @Override
   public AccessControl create() {
     return _accessControl;
   }
@@ -76,11 +67,10 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
    * Access Control using header-based basic http authentication
    */
   private static class BasicAuthAccessControl implements AccessControl {
-    private Map<String, BasicAuthPrincipal> _token2principal;
-    private final UserCache _userCache;
+    private final Map<String, BasicAuthPrincipal> _token2principal;
 
-    public BasicAuthAccessControl(UserCache userCache) {
-      _userCache = userCache;
+    public BasicAuthAccessControl(Collection<BasicAuthPrincipal> principals) {
+      _token2principal = principals.stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
     }
 
     @Override
@@ -92,13 +82,11 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
     public boolean hasAccess(RequesterIdentity requesterIdentity, BrokerRequest brokerRequest) {
       Preconditions.checkArgument(requesterIdentity instanceof HttpRequesterIdentity, "HttpRequesterIdentity required");
       HttpRequesterIdentity identity = (HttpRequesterIdentity) requesterIdentity;
-      Collection<String> tokens = identity.getHttpHeaders().get(HEADER_AUTHORIZATION);
 
-      _token2principal = BasicAuthUtils.extractBasicAuthPrincipals(_userCache.getAllBrokerUserConfig())
-              .stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
+      Collection<String> tokens = identity.getHttpHeaders().get(HEADER_AUTHORIZATION);
       Optional<BasicAuthPrincipal> principalOpt =
-              tokens.stream().map(BasicAuthUtils::normalizeBase64Token).map(_token2principal::get)
-                      .filter(Objects::nonNull).findFirst();
+          tokens.stream().map(BasicAuthUtils::normalizeBase64Token).map(_token2principal::get).filter(Objects::nonNull)
+              .findFirst();
 
       if (!principalOpt.isPresent()) {
         // no matching token? reject
@@ -107,7 +95,7 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
 
       BasicAuthPrincipal principal = principalOpt.get();
       if (brokerRequest == null || !brokerRequest.isSetQuerySource() || !brokerRequest.getQuerySource()
-              .isSetTableName()) {
+          .isSetTableName()) {
         // no table restrictions? accept
         return true;
       }
