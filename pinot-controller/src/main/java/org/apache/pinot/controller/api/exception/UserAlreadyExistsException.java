@@ -16,25 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.pinot.controller.api.access;
+package org.apache.pinot.controller.api.exception;
 
-import org.apache.helix.ZNRecord;
-import org.apache.helix.store.zk.ZkHelixPropertyStore;
-import org.apache.pinot.spi.annotations.InterfaceAudience;
-import org.apache.pinot.spi.annotations.InterfaceStability;
-import org.apache.pinot.spi.env.PinotConfiguration;
+public class UserAlreadyExistsException extends RuntimeException {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
 
-
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public interface AccessControlFactory {
-  default void init(PinotConfiguration pinotConfiguration) {
-    // left blank
-  }
-
-  default void init(ZkHelixPropertyStore<ZNRecord> zkHelixPropertyStore) {
-  }
+    public UserAlreadyExistsException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
 
-  AccessControl create();
 }

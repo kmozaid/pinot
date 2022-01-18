@@ -20,6 +20,8 @@ package org.apache.pinot.core.auth;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.pinot.spi.config.user.ComponentType;
+import org.apache.pinot.spi.config.user.RoleType;
 
 
 /**
@@ -28,13 +30,18 @@ import java.util.stream.Collectors;
 public class BasicAuthPrincipal {
   private final String _name;
   private final String _token;
+  private final String _component;
+  private final String _role;
   private final Set<String> _tables;
   private final Set<String> _permissions;
 
-  public BasicAuthPrincipal(String name, String token, Set<String> tables, Set<String> permissions) {
+  public BasicAuthPrincipal(String name, String token, String component, String role,
+                            Set<String> tables, Set<String> permissions) {
     _name = name;
     _token = token;
     _tables = tables;
+    _component = component;
+    _role = role;
     _permissions = permissions.stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
   }
 
@@ -46,11 +53,19 @@ public class BasicAuthPrincipal {
     return _token;
   }
 
+  public String getRole() {
+    return _role;
+  }
+
   public boolean hasTable(String tableName) {
     return _tables.isEmpty() || _tables.contains(tableName);
   }
 
   public boolean hasPermission(String permission) {
     return _permissions.isEmpty() || _permissions.contains(permission.toLowerCase());
+  }
+
+  public boolean hasPermission(RoleType role, ComponentType component) {
+    return RoleType.valueOf(_role).equals(role) && ComponentType.valueOf(_component).equals(component);
   }
 }

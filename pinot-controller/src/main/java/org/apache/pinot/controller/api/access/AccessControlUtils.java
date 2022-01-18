@@ -93,4 +93,21 @@ public class AccessControlUtils {
           Response.Status.FORBIDDEN);
     }
   }
+
+  public void validatePermission(HttpHeaders httpHeaders, String endpointUrl,
+                                 AccessControl accessControl) {
+    validatePermission("you", httpHeaders, endpointUrl, accessControl);
+  }
+
+  public void validatePermission(String username, HttpHeaders httpHeaders, String endpointUrl,
+                                 AccessControl accessControl) {
+    boolean hasPermission;
+    String accessTypeToEndpintMsg =
+            String.format("'%s' to the endpioint '%s'", username, endpointUrl);
+    hasPermission = accessControl.hasAccess(httpHeaders);
+    if (!hasPermission) {
+      throw new ControllerApplicationException(LOGGER, "Permission is denied for " + accessTypeToEndpintMsg,
+              Response.Status.FORBIDDEN);
+    }
+  }
 }

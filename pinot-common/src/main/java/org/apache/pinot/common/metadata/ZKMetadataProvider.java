@@ -21,6 +21,9 @@ package org.apache.pinot.common.metadata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.I0Itec.zkclient.exception.ZkBadVersionException;
 import org.apache.helix.AccessOption;
@@ -32,9 +35,11 @@ import org.apache.pinot.common.utils.SchemaUtils;
 import org.apache.pinot.common.utils.SegmentName;
 import org.apache.pinot.common.utils.StringUtil;
 import org.apache.pinot.common.utils.config.TableConfigUtils;
+import org.apache.pinot.common.utils.config.UserConfigUtils;
 import org.apache.pinot.spi.config.ConfigUtils;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.config.table.TableType;
+import org.apache.pinot.spi.config.user.UserConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.utils.CommonConstants;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
@@ -54,10 +59,16 @@ public class ZKMetadataProvider {
   private static final String PROPERTYSTORE_SCHEMAS_PREFIX = "/SCHEMAS";
   private static final String PROPERTYSTORE_INSTANCE_PARTITIONS_PREFIX = "/INSTANCE_PARTITIONS";
   private static final String PROPERTYSTORE_TABLE_CONFIGS_PREFIX = "/CONFIGS/TABLE";
+  private static final String PROPERTYSTORE_USER_CONFIGS_PREFIX = "/CONFIGS/USER";
   private static final String PROPERTYSTORE_INSTANCE_CONFIGS_PREFIX = "/CONFIGS/INSTANCE";
   private static final String PROPERTYSTORE_CLUSTER_CONFIGS_PREFIX = "/CONFIGS/CLUSTER";
   private static final String PROPERTYSTORE_SEGMENT_LINEAGE = "/SEGMENT_LINEAGE";
   private static final String PROPERTYSTORE_MINION_TASK_METADATA_PREFIX = "/MINION_TASK_METADATA";
+
+  public static void setUserConfig(ZkHelixPropertyStore<ZNRecord> propertyStore, String username, ZNRecord znRecord) {
+    propertyStore
+            .set(constructPropertyStorePathForUserConfig(username), znRecord, AccessOption.PERSISTENT);
+  }
 
   public static void setRealtimeTableConfig(ZkHelixPropertyStore<ZNRecord> propertyStore, String realtimeTableName,
       ZNRecord znRecord) {
@@ -107,6 +118,10 @@ public class ZKMetadataProvider {
     return StringUtil.join("/", PROPERTYSTORE_TABLE_CONFIGS_PREFIX, resourceName);
   }
 
+  public static String constructPropertyStorePathForUserConfig(String resourceName) {
+    return StringUtil.join("/", PROPERTYSTORE_USER_CONFIGS_PREFIX, resourceName);
+  }
+
   public static String constructPropertyStorePathForControllerConfig(String controllerConfigKey) {
     return StringUtil.join("/", PROPERTYSTORE_CLUSTER_CONFIGS_PREFIX, controllerConfigKey);
   }
@@ -128,6 +143,14 @@ public class ZKMetadataProvider {
   public static void removeResourceSegmentsFromPropertyStore(ZkHelixPropertyStore<ZNRecord> propertyStore,
       String resourceName) {
     String propertyStorePath = constructPropertyStorePathForResource(resourceName);
+    if (propertyStore.exists(propertyStorePath, AccessOption.PERSISTENT)) {
+      propertyStore.remove(propertyStorePath, AccessOption.PERSISTENT);
+    }
+  }
+
+  public static void removeUserConfigFromPropertyStore(ZkHelixPropertyStore<ZNRecord> propertyStore,
+                                                       String username) {
+    String propertyStorePath = constructPropertyStorePathForUserConfig(username);
     if (propertyStore.exists(propertyStorePath, AccessOption.PERSISTENT)) {
       propertyStore.remove(propertyStorePath, AccessOption.PERSISTENT);
     }
@@ -192,6 +215,50 @@ public class ZKMetadataProvider {
       LOGGER.error("Caught exception while getting table configuration for table: {}", tableNameWithType, e);
       return null;
     }
+  }
+
+  @Nullable
+  public static UserConfig getUserConfig(ZkHelixPropertyStore<ZNRecord> propertyStore, String username) {
+    ZNRecord znRecord = propertyStore
+            .get(constructPropertyStorePathForUserConfig(username), null, AccessOption.PERSISTENT);
+    if (znRecord == null) {
+      return null;
+    }
+    try {
+      UserConfig userConfig = UserConfigUtils.fromZNRecord(znRecord);
+      return (UserConfig) ConfigUtils.applyConfigWithEnvVariables(userConfig);
+    } catch (Exception e) {
+      LOGGER.error("Caught exception while getting user configuration for user: {}", username, e);
+      return null;
+    }
+  }
+
+  @Nullable
+  public static List<UserConfig> getAllUserConfig(ZkHelixPropertyStore<ZNRecord> propertyStore) {
+    List<ZNRecord> znRecordss = propertyStore
+            .getChildren(PROPERTYSTORE_USER_CONFIGS_PREFIX, null, AccessOption.PERSISTENT);
+
+    try {
+      return Optional.ofNullable(znRecordss)
+              .orElseGet(() -> {
+                return new ArrayList<>();
+              }).stream().map(UserConfigUtils::fromZNRecord).collect(Collectors.toList());
+    } catch (Exception e) {
+      LOGGER.error("Caught exception while getting user list configuration", e);
+      return null;
+    }
+  }
+
+  @Nullable
+  public static List<String> getAllUserName(ZkHelixPropertyStore<ZNRecord> propertyStore) {
+    return propertyStore
+            .getChildNames(PROPERTYSTORE_USER_CONFIGS_PREFIX, AccessOption.PERSISTENT);
+  }
+
+  @Nullable
+  public static Map<String, List<String>> getAllUserInfo(ZkHelixPropertyStore<ZNRecord> propertyStore) {
+    return getAllUserConfig(propertyStore).stream()
+            .collect(Collectors.toMap(UserConfig::getUsernameWithComponent, UserConfig::getTablesWithoutNull));
   }
 
   @Nullable

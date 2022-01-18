@@ -23,10 +23,12 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pinot.spi.config.user.UserConfig;
 import org.apache.pinot.spi.env.PinotConfiguration;
 
 
@@ -56,27 +58,32 @@ public final class BasicAuthUtils {
    *     my.prefix.access.control.principals.user456.permissions=read,update
    * </pre>
    *
-   * @param configuration pinot configuration
-   * @param prefix configuration namespace
    * @return list of BasicAuthPrincipals
    */
-  public static List<BasicAuthPrincipal> extractBasicAuthPrincipals(PinotConfiguration configuration, String prefix) {
-    String principalNames = configuration.getProperty(prefix);
-    Preconditions.checkArgument(StringUtils.isNotBlank(principalNames), "must provide principals");
 
-    return Arrays.stream(principalNames.split(",")).map(rawName -> {
-      String name = rawName.trim();
-      Preconditions.checkArgument(StringUtils.isNotBlank(name), "%s is not a valid name", name);
+  public static List<BasicAuthPrincipal> extractBasicAuthPrincipals(List<UserConfig> userConfigList) {
+    return userConfigList.stream()
+            .map(user -> {
+              String name = user.getUserName().trim();
+              Preconditions.checkArgument(StringUtils.isNoneBlank(name), "%s is not a valid username", name);
+              String password = user.getPassword().trim();
+              Preconditions.checkArgument(StringUtils.isNoneBlank(password), "must provide a password for %s", name);
+              String component = user.getComponentType().toString();
+              String role = user.getRoleType().toString();
 
-      String password = configuration.getProperty(String.format("%s.%s.%s", prefix, name, PASSWORD));
-      Preconditions.checkArgument(StringUtils.isNotBlank(password), "must provide a password for %s", name);
+              Set<String> tables = Optional.ofNullable(user.getTables())
+                      .orElseGet(() -> Collections.emptyList())
+                      .stream().collect(Collectors.toSet());
+              Set<String> permissions = Optional.ofNullable(user.getPermissios())
+                      .orElseGet(() -> Collections.emptyList())
+                      .stream().map(x -> x.toString())
+                      .collect(Collectors.toSet());
 
-      Set<String> tables = extractSet(configuration, String.format("%s.%s.%s", prefix, name, TABLES));
-      Set<String> permissions = extractSet(configuration, String.format("%s.%s.%s", prefix, name, PERMISSIONS));
-
-      return new BasicAuthPrincipal(name, toBasicAuthToken(name, password), tables, permissions);
-    }).collect(Collectors.toList());
+              return new BasicAuthPrincipal(name, toBasicAuthToken(name, password),
+                      component, role, tables, permissions);
+            }).collect(Collectors.toList());
   }
+
 
   private static Set<String> extractSet(PinotConfiguration configuration, String key) {
     String input = configuration.getProperty(key);
