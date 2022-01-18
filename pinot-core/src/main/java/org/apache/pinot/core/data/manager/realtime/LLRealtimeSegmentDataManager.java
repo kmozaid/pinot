@@ -70,6 +70,7 @@ import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.data.readers.GenericRow;
 import org.apache.pinot.spi.metrics.PinotMeter;
+import org.apache.pinot.spi.stream.InvalidPinotOffsetException;
 import org.apache.pinot.spi.stream.MessageBatch;
 import org.apache.pinot.spi.stream.OffsetCriteria;
 import org.apache.pinot.spi.stream.PartitionGroupConsumer;
@@ -275,7 +276,7 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
   private final String _instanceId;
   private final ServerSegmentCompletionProtocolHandler _protocolHandler;
   private final long _consumeStartTime;
-  private final StreamPartitionMsgOffset _startOffset;
+  private StreamPartitionMsgOffset _startOffset;
   private final PartitionLevelStreamConfig _partitionLevelStreamConfig;
 
   private long _lastLogTime = 0;
@@ -361,6 +362,19 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
     }
   }
 
+  private void handleOffsetOutOfRangeErrors(InvalidPinotOffsetException ex) {
+    if (ex.getRestedOffset() == null || ex.getRestedOffset() < 0) {
+      //TODO send metrics to jmx
+      _segmentLogger.error("can't get offset from kafka", ex);
+    } else {
+      _segmentZKMetadata.setStartOffset(String.valueOf(ex.getRestedOffset()));
+      _startOffset = _streamPartitionMsgOffsetFactory.create(_segmentZKMetadata.getStartOffset());
+      _currentOffset = _streamPartitionMsgOffsetFactory.create(String.valueOf(ex.getRestedOffset()));
+      _segmentLogger.warn("offset out of range exception, resetting offset to: {}", ex.getRestedOffset());
+    }
+
+  }
+
   private void handleTransientStreamErrors(Exception e)
       throws Exception {
     _consecutiveErrorCount++;
@@ -407,6 +421,9 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
       } catch (PermanentConsumerException e) {
         _segmentLogger.warn("Permanent exception from stream when fetching messages, stopping consumption", e);
         throw e;
+      } catch (InvalidPinotOffsetException ex) {
+        handleOffsetOutOfRangeErrors(ex);
+        continue;
       } catch (Exception e) {
         // all exceptions but PermanentConsumerException are handled the same way
         // can be a TimeoutException or TransientConsumerException routinely

@@ -57,7 +57,8 @@ public class VirtualColumnProviderFactory {
 
     if (!schema.hasColumn(BuiltInVirtualColumn.HOSTNAME)) {
       schema.addField(new DimensionFieldSpec(BuiltInVirtualColumn.HOSTNAME, FieldSpec.DataType.STRING, true,
-          DefaultNullValueVirtualColumnProvider.class, NetUtils.getHostnameOrAddress()));
+          DefaultNullValueVirtualColumnProvider.class, System.getenv("PINOT_HOST_ID") != null
+              ? System.getenv("PINOT_HOST_ID") : NetUtils.getHostnameOrAddress()));
     }
 
     if (!schema.hasColumn(BuiltInVirtualColumn.SEGMENTNAME)) {
