@@ -68,7 +68,7 @@ public interface AccessControl {
     return true;
   }
 
-  default  boolean hasAccess(HttpHeaders httpHeaders) {
+  default boolean hasAccess(HttpHeaders httpHeaders) {
     return true;
   }
 

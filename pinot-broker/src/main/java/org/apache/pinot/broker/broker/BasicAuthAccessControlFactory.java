@@ -63,8 +63,8 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
   }
 
   @Override
-  public void init(ZkHelixPropertyStore<ZNRecord> _propertyStore) {
-    _accessControl = new BasicAuthAccessControl(new UserCache(_propertyStore));
+  public void init(ZkHelixPropertyStore<ZNRecord> propertyStore) {
+    _accessControl = new BasicAuthAccessControl(new UserCache(propertyStore));
   }
 
   @Override
@@ -97,8 +97,8 @@ public class BasicAuthAccessControlFactory extends AccessControlFactory {
       _token2principal = BasicAuthUtils.extractBasicAuthPrincipals(_userCache.getAllBrokerUserConfig())
               .stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
       Optional<BasicAuthPrincipal> principalOpt =
-              tokens.stream().map(BasicAuthUtils::normalizeBase64Token).map(_token2principal::get).filter(Objects::nonNull)
-                      .findFirst();
+              tokens.stream().map(BasicAuthUtils::normalizeBase64Token).map(_token2principal::get)
+                      .filter(Objects::nonNull).findFirst();
 
       if (!principalOpt.isPresent()) {
         // no matching token? reject

@@ -1,12 +1,39 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.pinot.controller.api.resources;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -72,7 +99,7 @@ public class PinotUserRestletResource {
             _accessControlUtils
                     .validatePermission(httpHeaders, endpointUrl, _accessControlFactory.create());
             ZkHelixPropertyStore<ZNRecord> propertyStore = _pinotHelixResourceManager.getPropertyStore();
-            Map<String, List<String>> allUserInfo= ZKMetadataProvider.getAllUserInfo(propertyStore);
+            Map<String, List<String>> allUserInfo = ZKMetadataProvider.getAllUserInfo(propertyStore);
             return JsonUtils.newObjectNode().set("users", JsonUtils.objectToJsonNode(allUserInfo)).toString();
         } catch (Exception e) {
             throw new ControllerApplicationException(LOGGER, e.getMessage(), Response.Status.BAD_REQUEST, e);
@@ -106,7 +133,8 @@ public class PinotUserRestletResource {
         }
         try {
             _pinotHelixResourceManager.addUser(userConfig);
-            return new SuccessResponse(String.format("User %s has been successfully added!", userConfig.getUserName() + '_' + userConfig.getComponentType()));
+            return new SuccessResponse(String.format("User %s has been successfully added!",
+                    userConfig.getUserName() + '_' + userConfig.getComponentType()));
         } catch (Exception e) {
             if (e instanceof UserAlreadyExistsException) {
                 throw new ControllerApplicationException(LOGGER, e.getMessage(), Response.Status.CONFLICT, e);
@@ -122,7 +150,8 @@ public class PinotUserRestletResource {
     @Authenticate(AccessType.DELETE)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Deletes a user", notes = "Deletes a user")
-    public SuccessResponse deleteUser(@PathParam("username") String username, @QueryParam("component") String component, @Context HttpHeaders httpHeaders, @Context Request request) {
+    public SuccessResponse deleteUser(@PathParam("username") String username, @QueryParam("component") String component,
+                                      @Context HttpHeaders httpHeaders, @Context Request request) {
 
         List<String> usersDeleted = new LinkedList<>();
         String usernameWithComponentType = username + "_" + component;
@@ -155,7 +184,7 @@ public class PinotUserRestletResource {
     @Path("/users/{username}")
     @Authenticate(AccessType.UPDATE)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Updates table config for a table", notes = "Updates table config for a table")
+    @ApiOperation(value = "Updates user config for a user", notes = "Updates user config for a user")
     public SuccessResponse updateUserConfig(
             @PathParam("username") String username,
             @QueryParam("component") String component,
@@ -175,8 +204,9 @@ public class PinotUserRestletResource {
             String usernameWithComponentTypeFromUserConfig = userConfig.getUsernameWithComponent();
             if (!usernameWithComponentType.equals(usernameWithComponentTypeFromUserConfig)) {
                 throw new ControllerApplicationException(LOGGER,
-                        String.format("Request user %s does not match %s in the Request body", usernameWithComponentType, usernameWithComponentTypeFromUserConfig),
-                        Response.Status.BAD_REQUEST);
+                        String.format("Request user %s does not match %s in the Request body",
+                                usernameWithComponentType, usernameWithComponentTypeFromUserConfig),
+                                    Response.Status.BAD_REQUEST);
             }
             if (!_pinotHelixResourceManager.hasUser(username, component)) {
                 throw new ControllerApplicationException(LOGGER,

@@ -36,7 +36,7 @@ public class AllowAllAccessControlFactory extends AccessControlFactory {
   public void init(PinotConfiguration configuration) {
   }
 
-  public void init(ZkHelixPropertyStore<ZNRecord> _propertyStore) {
+  public void init(ZkHelixPropertyStore<ZNRecord> propertyStore) {
   }
 
   public AccessControl create() {

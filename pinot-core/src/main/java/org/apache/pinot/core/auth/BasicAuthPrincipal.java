@@ -35,7 +35,8 @@ public class BasicAuthPrincipal {
   private final Set<String> _tables;
   private final Set<String> _permissions;
 
-  public BasicAuthPrincipal(String name, String token, String component, String role, Set<String> tables, Set<String> permissions) {
+  public BasicAuthPrincipal(String name, String token, String component, String role,
+                            Set<String> tables, Set<String> permissions) {
     _name = name;
     _token = token;
     _tables = tables;

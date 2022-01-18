@@ -53,16 +53,9 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
 
   private AccessControl _accessControl;
 
-//  public void init(PinotConfiguration configuration) {
-//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(configuration, PREFIX));
-//  }
-
   @Override
-  public void init(ZkHelixPropertyStore<ZNRecord> _propertyStore) {
-//    _userCache = new UserCache(_propertyStore);
-//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(_propertyStore));
-//    _accessControl = new BasicAuthAccessControl(BasicAuthUtils.extractBasicAuthPrincipals(new UserCache(_propertyStore));
-    _accessControl = new BasicAuthAccessControl(new UserCache(_propertyStore));
+  public void init(ZkHelixPropertyStore<ZNRecord> propertyStore) {
+    _accessControl = new BasicAuthAccessControl(new UserCache(propertyStore));
   }
 
   @Override
@@ -74,12 +67,11 @@ public class BasicAuthAccessControlFactory implements AccessControlFactory {
    * Access Control using header-based basic http authentication
    */
   private static class BasicAuthAccessControl implements AccessControl {
-    private  Map<String, BasicAuthPrincipal> _token2principal;
+    private Map<String, BasicAuthPrincipal> _token2principal;
     private final UserCache _userCache;
 
     public BasicAuthAccessControl(UserCache userCache) {
       _userCache = userCache;
-//      _token2principal = principals.stream().collect(Collectors.toMap(BasicAuthPrincipal::getToken, p -> p));
     }
 
     @Override

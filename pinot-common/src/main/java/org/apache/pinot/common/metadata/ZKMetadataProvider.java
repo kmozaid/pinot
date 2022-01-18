@@ -18,7 +18,11 @@
  */
 package org.apache.pinot.common.metadata;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.I0Itec.zkclient.exception.ZkBadVersionException;
@@ -236,9 +240,10 @@ public class ZKMetadataProvider {
 
     try {
       return Optional.ofNullable(znRecordss)
-              .orElseGet(() -> {return new ArrayList<>();})
-              .stream().map(UserConfigUtils::fromZNRecord).collect(Collectors.toList());
-    } catch(Exception e) {
+              .orElseGet(() -> {
+                return new ArrayList<>();
+              }).stream().map(UserConfigUtils::fromZNRecord).collect(Collectors.toList());
+    } catch (Exception e) {
       LOGGER.error("Caught exception while getting user list configuration", e);
       return null;
     }
@@ -252,7 +257,8 @@ public class ZKMetadataProvider {
 
   @Nullable
   public static Map<String, List<String>> getAllUserInfo(ZkHelixPropertyStore<ZNRecord> propertyStore) {
-    return getAllUserConfig(propertyStore).stream().collect(Collectors.toMap(UserConfig::getUsernameWithComponent, UserConfig::getTablesWithoutNull));
+    return getAllUserConfig(propertyStore).stream()
+            .collect(Collectors.toMap(UserConfig::getUsernameWithComponent, UserConfig::getTablesWithoutNull));
   }
 
   @Nullable

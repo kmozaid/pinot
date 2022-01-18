@@ -32,7 +32,8 @@ public interface AccessControlFactory {
     // left blank
   }
 
-  default void init(ZkHelixPropertyStore<ZNRecord> zkHelixPropertyStore) {}
+  default void init(ZkHelixPropertyStore<ZNRecord> zkHelixPropertyStore) {
+  }
 
 
   AccessControl create();

@@ -28,7 +28,20 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -1228,8 +1241,10 @@ public class PinotHelixResourceManager {
 
   public void initUserACLConfig() throws IOException {
     if (Optional.ofNullable(ZKMetadataProvider.getAllUserName(_propertyStore)).isEmpty()) {
-      addUser(new UserConfig("admin", "Pda@wap%admin", ComponentType.CONTROLLER.name(), RoleType.ADMIN.name(), null, null));
-      addUser(new UserConfig("admin", "Pda@wap%admin", ComponentType.BROKER.name(), RoleType.ADMIN.name(), null, null));
+      addUser(new UserConfig("admin", "Pda@wap%admin", ComponentType.CONTROLLER.name(),
+              RoleType.ADMIN.name(), null, null));
+      addUser(new UserConfig("admin", "Pda@wap%admin", ComponentType.BROKER.name(),
+              RoleType.ADMIN.name(), null, null));
     }
   }
 
@@ -1237,8 +1252,9 @@ public class PinotHelixResourceManager {
           throws IOException {
     String usernamePrefix = userConfig.getUserName() + "_" + userConfig.getComponentType();
     boolean isExists = Optional.ofNullable(ZKMetadataProvider.getAllUserConfig(_propertyStore))
-            .orElseGet(() -> {return new ArrayList();})
-            .contains(userConfig);
+            .orElseGet(() -> {
+              return new ArrayList();
+            }).contains(userConfig);
     if (isExists) {
       throw new UserAlreadyExistsException("User " + usernamePrefix + " already exists");
     }

@@ -1,5 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.pinot.common.utils;
-
 
 import java.util.Base64;
 import javax.crypto.Cipher;
@@ -14,24 +31,27 @@ import org.apache.commons.lang3.StringUtils;
 public class EncryptUtils {
 
     /**
-     * 加解密密钥, 外部可以
+     * encryption and decryption keys, even external
      */
     public static final String AES_DATA_SECURITY_KEY = "4%YkW!@g5LGcf9Ut";
     /**
-     * 算法/加密模式/填充方式
+     * Algorithm/Encryption Mode/Padding
      */
     private static final String AES_PKCS5P = "AES/ECB/PKCS5Padding";
 
     private static final String AES_PERSON_KEY_SECURITY_KEY = "pisnyMyZYXuCNcRd";
 
+    private EncryptUtils() {
+
+    }
 
     /**
-     * 加密
+     * Encryption
      *
      * @param str
-     *            需要加密的字符串
+     *            String to be encrypted
      * @param key
-     *            密钥
+     *            key
      * @return
      * @throws Exception
      */
@@ -43,17 +63,17 @@ public class EncryptUtils {
             if (str == null) {
                 return null;
             }
-            // 判断Key是否为16位
+            // Determine whether the Key is 16 bits
             if (key.length() != 16) {
                 return null;
             }
             byte[] raw = key.getBytes("UTF-8");
             SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
-            // "算法/模式/补码方式"
+            // Algorithm/Mode/Complement Method
             Cipher cipher = Cipher.getInstance(AES_PKCS5P);
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
             byte[] encrypted = cipher.doFinal(str.getBytes("UTF-8"));
-            // 此处使用BASE64做转码功能，同时能起到2次加密的作用。
+            // Here, BASE64 is used for the transcoding function, and it can also play the role of 2 encryptions.
 
             Base64.Encoder encoder = Base64.getEncoder();
             return encoder.encodeToString(encrypted);
@@ -65,10 +85,10 @@ public class EncryptUtils {
     }
 
     /**
-     * 解密
+     * decryption
      *
-     * @param str 需要解密的字符串
-     * @param key 密钥
+     * @param str String to decrypt
+     * @param key key
      * @return
      */
     public static String decrypt(String str, String key) {
@@ -79,7 +99,7 @@ public class EncryptUtils {
             if (str == null) {
                 return null;
             }
-            // 判断Key是否为16位
+            // Determine whether the Key is 16 bits
             if (key.length() != 16) {
                 return null;
             }
@@ -87,7 +107,7 @@ public class EncryptUtils {
             SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
             Cipher cipher = Cipher.getInstance(AES_PKCS5P);
             cipher.init(Cipher.DECRYPT_MODE, skeySpec);
-            // 先用base64解密
+            // Decrypt with base64 first
             Base64.Decoder decoder = Base64.getDecoder();
             byte[] encrypted = decoder.decode(str);
 //            byte[] encrypted = new BASE64Decoder().decodeBuffer(str);
@@ -104,27 +124,27 @@ public class EncryptUtils {
     }
 
     /**
-     * 加密
+     * Encryption
      *
-     * @param str 需要加密的字符串
+     * @param str String to be encrypted
      * @return
      * @throws Exception
      */
     public static String encrypt(String str) {
-        return encrypt(str,AES_DATA_SECURITY_KEY);
+        return encrypt(str, AES_DATA_SECURITY_KEY);
     }
 
     /**
-     * 解密
-     * @param str 需要解密的字符串
+     * Decryption
+     * @param str String to decrypt
      * @return
      */
     public static String decrypt(String str) {
-        return decrypt(str,AES_DATA_SECURITY_KEY);
+        return decrypt(str, AES_DATA_SECURITY_KEY);
     }
 
     /**
-     * 查询的时候对某些字段解密
+     * Decrypt certain fields when querying
      *
      * @param str
      * @return
@@ -138,7 +158,7 @@ public class EncryptUtils {
     }
 
     /**
-     * 对personKey加密
+     * Encrypt personKey
      *
      * @param personKey
      * @return
@@ -148,7 +168,7 @@ public class EncryptUtils {
     }
 
     /**
-     * 对personKey解密
+     * Decrypt personKey
      *
      * @param personKey
      * @return
