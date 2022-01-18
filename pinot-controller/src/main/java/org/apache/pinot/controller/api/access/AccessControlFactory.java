@@ -18,8 +18,6 @@
  */
 package org.apache.pinot.controller.api.access;
 
-import org.apache.helix.ZNRecord;
-import org.apache.helix.store.zk.ZkHelixPropertyStore;
 import org.apache.pinot.spi.annotations.InterfaceAudience;
 import org.apache.pinot.spi.annotations.InterfaceStability;
 import org.apache.pinot.spi.env.PinotConfiguration;
@@ -31,10 +29,6 @@ public interface AccessControlFactory {
   default void init(PinotConfiguration pinotConfiguration) {
     // left blank
   }
-
-  default void init(ZkHelixPropertyStore<ZNRecord> zkHelixPropertyStore) {
-  }
-
 
   AccessControl create();
 }

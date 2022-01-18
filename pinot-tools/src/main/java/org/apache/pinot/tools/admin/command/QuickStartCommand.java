@@ -33,7 +33,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "QuickStart")
 public class QuickStartCommand extends AbstractBaseAdminCommand implements Command {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(QuickStartCommand.class.getName());
 
   @CommandLine.Option(names = "-type", required = false,

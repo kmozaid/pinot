@@ -18,8 +18,6 @@
  */
 package org.apache.pinot.broker.broker;
 
-import org.apache.helix.ZNRecord;
-import org.apache.helix.store.zk.ZkHelixPropertyStore;
 import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.api.RequesterIdentity;
 import org.apache.pinot.common.request.BrokerRequest;
@@ -34,9 +32,6 @@ public class AllowAllAccessControlFactory extends AccessControlFactory {
   }
 
   public void init(PinotConfiguration configuration) {
-  }
-
-  public void init(ZkHelixPropertyStore<ZNRecord> propertyStore) {
   }
 
   public AccessControl create() {
