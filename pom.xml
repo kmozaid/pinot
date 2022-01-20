@@ -103,8 +103,8 @@
 
   <properties>
     <pinot.root>${basedir}</pinot.root>
-    <build.profile.id>jdk-8-maven-compiler-plugin</build.profile.id>
-    <jdk.version>8</jdk.version>
+    <build.profile.id>dev</build.profile.id>
+    <jdk.version>11</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Only unit tests are run by default. -->
     <skip.integration.tests>true</skip.integration.tests>
@@ -272,7 +272,7 @@
       <activation>
         <property>
           <name>jdk.version</name>
-          <value>8</value>
+          <value>!8</value>
         </property>
       </activation>
       <build>
