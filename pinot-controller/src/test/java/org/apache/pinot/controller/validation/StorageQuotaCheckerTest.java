@@ -55,7 +55,8 @@ public class StorageQuotaCheckerTest {
         new TableConfigBuilder(TableType.OFFLINE).setTableName(OFFLINE_TABLE_NAME).setNumReplicas(NUM_REPLICAS).build();
     _tableSizeReader = mock(TableSizeReader.class);
     _controllerMetrics = new ControllerMetrics(PinotMetricUtils.getPinotMetricsRegistry());
-    _storageQuotaChecker = new StorageQuotaChecker(_tableConfig, _tableSizeReader, _controllerMetrics, true);
+    _storageQuotaChecker = new StorageQuotaChecker(_tableConfig, _tableSizeReader, _controllerMetrics,
+            null,true);
   }
 
   private boolean isSegmentWithinQuota()

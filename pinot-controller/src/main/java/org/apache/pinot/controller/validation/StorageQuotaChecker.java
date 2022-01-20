@@ -40,20 +40,20 @@ import org.slf4j.LoggerFactory;
 public class StorageQuotaChecker {
   private static final Logger LOGGER = LoggerFactory.getLogger(StorageQuotaChecker.class);
 
-  @Inject
-  PinotHelixResourceManager _pinotHelixResourceManager;
-
+//  @Inject
+  private PinotHelixResourceManager _pinotHelixResourceManager;
   private final TableSizeReader _tableSizeReader;
   private final TableConfig _tableConfig;
   private final ControllerMetrics _controllerMetrics;
   private final boolean _isLeaderForTable;
 
   public StorageQuotaChecker(TableConfig tableConfig, TableSizeReader tableSizeReader,
-      ControllerMetrics controllerMetrics, boolean isLeaderForTable) {
+      ControllerMetrics controllerMetrics, PinotHelixResourceManager helixResourceManager, boolean isLeaderForTable) {
     _tableConfig = tableConfig;
     _tableSizeReader = tableSizeReader;
     _controllerMetrics = controllerMetrics;
     _isLeaderForTable = isLeaderForTable;
+    _pinotHelixResourceManager = helixResourceManager;
   }
 
   public static class QuotaCheckerResponse {

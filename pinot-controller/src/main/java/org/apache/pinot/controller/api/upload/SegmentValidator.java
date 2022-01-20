@@ -115,7 +115,8 @@ public class SegmentValidator {
     TableSizeReader tableSizeReader =
         new TableSizeReader(_executor, _connectionManager, _controllerMetrics, _pinotHelixResourceManager);
     StorageQuotaChecker quotaChecker =
-        new StorageQuotaChecker(offlineTableConfig, tableSizeReader, _controllerMetrics, _isLeaderForTable);
+        new StorageQuotaChecker(offlineTableConfig, tableSizeReader, _controllerMetrics, _pinotHelixResourceManager,
+                _isLeaderForTable);
     return quotaChecker.isSegmentStorageWithinQuota(metadata.getName(), FileUtils.sizeOfDirectory(segmentFile),
         _controllerConf.getServerAdminRequestTimeoutSeconds() * 1000);
   }
