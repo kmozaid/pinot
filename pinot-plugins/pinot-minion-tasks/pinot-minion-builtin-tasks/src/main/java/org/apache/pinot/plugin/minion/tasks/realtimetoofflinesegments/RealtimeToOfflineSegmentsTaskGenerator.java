@@ -231,6 +231,10 @@ public class RealtimeToOfflineSegmentsTaskGenerator extends BaseTaskGenerator {
           configs.put(entry.getKey(), entry.getValue());
         }
       }
+      if (taskConfigs.containsKey("partitionerType")) {
+        configs.put("partitionerType", taskConfigs.get("partitionerType"));
+        configs.put("partitionColumn", taskConfigs.get("partitionColumn"));
+      }
       String maxNumRecordsPerSegment = taskConfigs.get(RealtimeToOfflineSegmentsTask.MAX_NUM_RECORDS_PER_SEGMENT_KEY);
       if (maxNumRecordsPerSegment != null) {
         configs.put(RealtimeToOfflineSegmentsTask.MAX_NUM_RECORDS_PER_SEGMENT_KEY, maxNumRecordsPerSegment);

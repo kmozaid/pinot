@@ -33,6 +33,8 @@ import org.apache.pinot.core.minion.PinotTaskConfig;
 import org.apache.pinot.core.segment.processing.framework.MergeType;
 import org.apache.pinot.core.segment.processing.framework.SegmentProcessorConfig;
 import org.apache.pinot.core.segment.processing.framework.SegmentProcessorFramework;
+import org.apache.pinot.core.segment.processing.partitioner.PartitionerConfig;
+import org.apache.pinot.core.segment.processing.partitioner.PartitionerFactory;
 import org.apache.pinot.minion.MinionConf;
 import org.apache.pinot.minion.executor.MinionTaskZkMetadataManager;
 import org.apache.pinot.plugin.minion.tasks.BaseMultipleSegmentsConversionExecutor;
@@ -128,9 +130,15 @@ public class RealtimeToOfflineSegmentsTaskExecutor extends BaseMultipleSegmentsC
     segmentProcessorConfigBuilder
         .setTimeHandlerConfig(MergeTaskUtils.getTimeHandlerConfig(tableConfig, schema, configs));
 
-    // Partitioner config
-    segmentProcessorConfigBuilder
-        .setPartitionerConfigs(MergeTaskUtils.getPartitionerConfigs(tableConfig, schema, configs));
+    // Partitioner config, from table config.
+    List<PartitionerConfig> partitionerConfigs = MergeTaskUtils.getPartitionerConfigs(tableConfig, schema, configs);
+
+    // Partitions using a column value, from task config.
+    if (PartitionerFactory.PartitionerType.COLUMN_VALUE.toString().equalsIgnoreCase(configs.get("partitionerType"))) {
+      partitionerConfigs = new ArrayList<>(partitionerConfigs);
+      partitionerConfigs.add(MergeTaskUtils.getColumnValuePartitionerConfigs(tableConfig, schema, configs));
+    }
+    segmentProcessorConfigBuilder.setPartitionerConfigs(partitionerConfigs);
 
     // Merge type
     MergeType mergeType = MergeTaskUtils.getMergeType(configs);

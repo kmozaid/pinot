@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
@@ -30,6 +31,7 @@ import org.apache.pinot.core.segment.processing.genericrow.GenericRowFileManager
 import org.apache.pinot.core.segment.processing.genericrow.GenericRowFileReader;
 import org.apache.pinot.core.segment.processing.genericrow.GenericRowFileRecordReader;
 import org.apache.pinot.core.segment.processing.mapper.SegmentMapper;
+import org.apache.pinot.core.segment.processing.partitioner.PartitionerFactory;
 import org.apache.pinot.core.segment.processing.reducer.Reducer;
 import org.apache.pinot.core.segment.processing.reducer.ReducerFactory;
 import org.apache.pinot.segment.local.recordtransformer.CompositeTransformer;
@@ -126,11 +128,26 @@ public class SegmentProcessorFramework {
       generatorConfig.setSegmentNamePrefix(segmentNamePrefix);
     }
 
+    boolean isColumnValuePartitioner = _segmentProcessorConfig.getPartitionerConfigs().stream()
+            .anyMatch(partitionerConfig -> partitionerConfig.getPartitionerType()
+                    == PartitionerFactory.PartitionerType.COLUMN_VALUE);
+
     int maxNumRecordsPerSegment = _segmentProcessorConfig.getSegmentConfig().getMaxNumRecordsPerSegment();
     CompositeTransformer passThroughTransformer = CompositeTransformer.getPassThroughTransformer();
     int sequenceId = 0;
     for (Map.Entry<String, GenericRowFileManager> entry : partitionToFileManagerMap.entrySet()) {
       String partitionId = entry.getKey();
+
+      // Add partitionId in segments metadata and segments name.
+      if (isColumnValuePartitioner) {
+        Map<String, String> customInfo = generatorConfig.getCustomProperties() == null ? new HashMap<>()
+                : generatorConfig.getCustomProperties();
+        customInfo.put("custom.partitionId", partitionId);
+        generatorConfig.setCustomProperties(customInfo);
+        generatorConfig.setSegmentNamePostfix(partitionId);
+      }
+
+
       GenericRowFileManager fileManager = entry.getValue();
       GenericRowFileReader fileReader = fileManager.getFileReader();
       int numRows = fileReader.getNumRows();

@@ -61,6 +61,7 @@ import org.apache.pinot.tools.admin.command.UploadSegmentCommand;
 import org.apache.pinot.tools.admin.command.ValidateConfigCommand;
 import org.apache.pinot.tools.admin.command.VerifyClusterStateCommand;
 import org.apache.pinot.tools.admin.command.VerifySegmentState;
+import org.apache.pinot.tools.admin.command.VerifyPartitionedSegmentCommand;
 import org.apache.pinot.tools.segment.converter.PinotSegmentConvertCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,6 +118,7 @@ public class PinotAdministrator {
     SUBCOMMAND_MAP.put("RebalanceTable", new RebalanceTableCommand());
     SUBCOMMAND_MAP.put("ChangeNumReplicas", new ChangeNumReplicasCommand());
     SUBCOMMAND_MAP.put("ValidateConfig", new ValidateConfigCommand());
+    SUBCOMMAND_MAP.put("VerifyPartitionedSegment", new VerifyPartitionedSegmentCommand());
     SUBCOMMAND_MAP.put("VerifySegmentState", new VerifySegmentState());
     SUBCOMMAND_MAP.put("ConvertPinotSegment", new PinotSegmentConvertCommand());
     SUBCOMMAND_MAP.put("MoveReplicaGroup", new MoveReplicaGroup());

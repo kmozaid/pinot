@@ -109,6 +109,23 @@ public class MergeTaskUtils {
   }
 
   /**
+   * Creates the column_value partitioner configs based on the given table config, schema and task config.
+   */
+  public static PartitionerConfig getColumnValuePartitionerConfigs(TableConfig tableConfig, Schema schema,
+                                                                         Map<String, String> taskConfig) {
+    String partitionColumn = taskConfig.get("partitionColumn");
+    Preconditions.checkState(schema.hasColumn(partitionColumn),
+            "Partition column: %s does not exist in the schema for table: %s",
+            partitionColumn, tableConfig.getTableName());
+    PartitionerConfig partitionerConfig =
+            new PartitionerConfig.Builder()
+                    .setPartitionerType(PartitionerFactory.PartitionerType.COLUMN_VALUE)
+                    .setColumnName(partitionColumn)
+                    .build();
+    return partitionerConfig;
+  }
+
+  /**
    * Returns the merge type based on the task config. Returns {@code null} if it is not configured.
    */
   @Nullable
