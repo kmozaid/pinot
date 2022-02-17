@@ -50,6 +50,10 @@ public class ColumnPartitionMetadata {
   private final Map<String, String> _functionConfig;
   private final Set<Integer> _partitions;
 
+  public ColumnPartitionMetadata(String functionName, int numPartitions, Set<Integer> partitions) {
+    this(functionName, numPartitions, partitions, null);
+  }
+
   /**
    * Constructor for the class.
    *

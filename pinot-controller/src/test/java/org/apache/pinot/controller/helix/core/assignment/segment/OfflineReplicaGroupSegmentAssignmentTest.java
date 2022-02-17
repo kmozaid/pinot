@@ -118,7 +118,7 @@ public class OfflineReplicaGroupSegmentAssignmentTest {
       SegmentZKMetadata segmentZKMetadata = new SegmentZKMetadata(segmentName);
       int partitionId = segmentId % NUM_PARTITIONS;
       segmentZKMetadata.setPartitionMetadata(new SegmentPartitionMetadata(Collections.singletonMap(PARTITION_COLUMN,
-          new ColumnPartitionMetadata(null, NUM_PARTITIONS, Collections.singleton(partitionId), null))));
+          new ColumnPartitionMetadata(null, NUM_PARTITIONS, Collections.singleton(partitionId)))));
       ZNRecord segmentZKMetadataZNRecord = segmentZKMetadata.toZNRecord();
       when(propertyStoreWithPartitions.get(
           eq(ZKMetadataProvider.constructPropertyStorePathForSegment(OFFLINE_TABLE_NAME_WITH_PARTITION, segmentName)),

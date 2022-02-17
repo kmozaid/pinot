@@ -95,9 +95,9 @@ public class SegmentZKMetadataTest {
 
     Map<String, ColumnPartitionMetadata> columnPartitionMetadataMap = new HashMap<>();
     columnPartitionMetadataMap
-        .put("column1", new ColumnPartitionMetadata("func1", 8, new HashSet<>(Arrays.asList(5, 7)), null));
+        .put("column1", new ColumnPartitionMetadata("func1", 8, new HashSet<>(Arrays.asList(5, 7))));
     columnPartitionMetadataMap
-        .put("column2", new ColumnPartitionMetadata("func2", 12, new HashSet<>(Arrays.asList(9, 10, 11)), null));
+        .put("column2", new ColumnPartitionMetadata("func2", 12, new HashSet<>(Arrays.asList(9, 10, 11))));
     SegmentPartitionMetadata expectedPartitionMetadata = new SegmentPartitionMetadata(columnPartitionMetadataMap);
 
     assertEquals(SegmentPartitionMetadata.fromJsonString(legacyMetadataString), expectedPartitionMetadata);
