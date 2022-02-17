@@ -235,7 +235,7 @@ public class SegmentPrunerTest extends ControllerTest {
     ExternalView externalView = Mockito.mock(ExternalView.class);
 
     PartitionSegmentPruner segmentPruner =
-        new PartitionSegmentPruner(OFFLINE_TABLE_NAME, PARTITION_COLUMN, _propertyStore);
+        new PartitionSegmentPruner(OFFLINE_TABLE_NAME, Collections.singleton(PARTITION_COLUMN), _propertyStore);
     Set<String> onlineSegments = new HashSet<>();
     segmentPruner.init(idealState, externalView, onlineSegments);
     assertEquals(segmentPruner.prune(brokerRequest1, Collections.emptySet()), Collections.emptySet());

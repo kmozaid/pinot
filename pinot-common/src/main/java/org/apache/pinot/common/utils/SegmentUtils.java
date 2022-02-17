@@ -24,6 +24,7 @@ import org.apache.helix.HelixManager;
 import org.apache.pinot.common.metadata.ZKMetadataProvider;
 import org.apache.pinot.common.metadata.segment.SegmentPartitionMetadata;
 import org.apache.pinot.common.metadata.segment.SegmentZKMetadata;
+import org.apache.pinot.segment.spi.partition.PartitionFunctionFactory;
 import org.apache.pinot.segment.spi.partition.metadata.ColumnPartitionMetadata;
 
 
@@ -61,6 +62,9 @@ public class SegmentUtils {
     Preconditions.checkState(partitions.size() == 1,
         "Segment ZK metadata for segment: %s of table: %s contains multiple partitions for column: %s with %s",
         segmentName, realtimeTableName, partitionColumn, partitions);
+    Preconditions.checkState(!columnPartitionMetadata.getFunctionName()
+                    .equals(PartitionFunctionFactory.PartitionFunctionType.BoundedColumnValue.name()),
+            "Realtime table can not use BoundedColumnValue partition function.");
     return partitions.iterator().next();
   }
 }

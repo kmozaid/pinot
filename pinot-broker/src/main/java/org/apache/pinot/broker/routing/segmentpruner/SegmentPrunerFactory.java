@@ -21,6 +21,7 @@ package org.apache.pinot.broker.routing.segmentpruner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.helix.ZNRecord;
 import org.apache.helix.store.zk.ZkHelixPropertyStore;
@@ -79,7 +80,7 @@ public class SegmentPrunerFactory {
             && LEGACY_PARTITION_AWARE_REALTIME_ROUTING.equalsIgnoreCase(routingTableBuilderName))) {
           PartitionSegmentPruner partitionSegmentPruner = getPartitionSegmentPruner(tableConfig, propertyStore);
           if (partitionSegmentPruner != null) {
-            segmentPruners.add(getPartitionSegmentPruner(tableConfig, propertyStore));
+            segmentPruners.add(partitionSegmentPruner);
           }
         }
       }
@@ -97,16 +98,10 @@ public class SegmentPrunerFactory {
       return null;
     }
     Map<String, ColumnPartitionConfig> columnPartitionMap = segmentPartitionConfig.getColumnPartitionMap();
-    if (columnPartitionMap.size() != 1) {
-      LOGGER.warn("Cannot enable partition pruning with other than exact one partition column for table: {}",
-          tableNameWithType);
-      return null;
-    } else {
-      String partitionColumn = columnPartitionMap.keySet().iterator().next();
-      LOGGER.info("Using PartitionSegmentPruner on partition column: {} for table: {}", partitionColumn,
-          tableNameWithType);
-      return new PartitionSegmentPruner(tableNameWithType, partitionColumn, propertyStore);
-    }
+    Set<String> partitionColumns =  columnPartitionMap.keySet();
+    LOGGER.info("Using PartitionSegmentPruner on partition columns: {} for table: {}", partitionColumns,
+            tableNameWithType);
+    return new PartitionSegmentPruner(tableNameWithType, partitionColumns, propertyStore);
   }
 
   @Nullable
