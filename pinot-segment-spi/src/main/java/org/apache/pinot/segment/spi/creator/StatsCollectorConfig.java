@@ -25,6 +25,8 @@ import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.data.FieldSpec;
 import org.apache.pinot.spi.data.Schema;
 
+import java.util.Map;
+
 
 /**
  * Config class for Stats collector, contains all the configs and parameters required to build
@@ -74,6 +76,10 @@ public class StatsCollectorConfig {
   public int getNumPartitions(String column) {
     return (_segmentPartitionConfig != null) ? _segmentPartitionConfig.getNumPartitions(column)
         : SegmentPartitionConfig.INVALID_NUM_PARTITIONS;
+  }
+
+  public Map<String, String> getFunctionConfig(String column) {
+    return (_segmentPartitionConfig != null) ? _segmentPartitionConfig.getFunctionConfig(column) : null;
   }
 
   public Schema getSchema() {

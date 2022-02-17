@@ -1467,7 +1467,7 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
 
         realtimeSegmentConfigBuilder.setPartitionColumn(partitionColumn);
         realtimeSegmentConfigBuilder.setPartitionFunction(
-            PartitionFunctionFactory.getPartitionFunction(partitionFunctionName, numPartitions));
+            PartitionFunctionFactory.getPartitionFunction(partitionFunctionName, numPartitions, null));
         realtimeSegmentConfigBuilder.setPartitionId(_partitionGroupId);
       } else {
         _segmentLogger.warn("Cannot partition on multiple columns: {}", columnPartitionMap.keySet());

@@ -56,7 +56,7 @@ public class PartitionFunctionTest {
 
       String functionName = "MoDuLo";
       PartitionFunction partitionFunction =
-          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions);
+          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions, null);
 
       testBasicProperties(partitionFunction, functionName, expectedNumPartitions);
 
@@ -108,7 +108,7 @@ public class PartitionFunctionTest {
 
       String functionName = "mUrmur";
       PartitionFunction partitionFunction =
-          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions);
+          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions, null);
 
       testBasicProperties(partitionFunction, functionName, expectedNumPartitions);
 
@@ -143,7 +143,7 @@ public class PartitionFunctionTest {
 
       String functionName = "bYteArray";
       PartitionFunction partitionFunction =
-          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions);
+          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions, null);
 
       testBasicProperties(partitionFunction, functionName, expectedNumPartitions);
 
@@ -170,7 +170,7 @@ public class PartitionFunctionTest {
 
       String functionName = "HaShCoDe";
       PartitionFunction partitionFunction =
-          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions);
+          PartitionFunctionFactory.getPartitionFunction(functionName, expectedNumPartitions, null);
 
       testBasicProperties(partitionFunction, functionName, expectedNumPartitions);
 

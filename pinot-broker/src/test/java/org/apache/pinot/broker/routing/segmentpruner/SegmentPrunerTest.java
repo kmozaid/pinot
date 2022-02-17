@@ -146,14 +146,14 @@ public class SegmentPrunerTest extends ControllerTest {
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
 
     // Partition-aware segment pruner should be returned
-    columnPartitionConfigMap.put(PARTITION_COLUMN, new ColumnPartitionConfig("Modulo", 5));
+    columnPartitionConfigMap.put(PARTITION_COLUMN, new ColumnPartitionConfig("Modulo", 5, null));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, _propertyStore);
     assertEquals(segmentPruners.size(), 2);
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
     assertTrue(segmentPruners.get(1) instanceof PartitionSegmentPruner);
 
     // Do not allow multiple partition columns
-    columnPartitionConfigMap.put("anotherPartitionColumn", new ColumnPartitionConfig("Modulo", 5));
+    columnPartitionConfigMap.put("anotherPartitionColumn", new ColumnPartitionConfig("Modulo", 5, null));
     segmentPruners = SegmentPrunerFactory.getSegmentPruners(tableConfig, _propertyStore);
     assertEquals(segmentPruners.size(), 1);
     assertTrue(segmentPruners.get(0) instanceof EmptySegmentPruner);
@@ -626,7 +626,7 @@ public class SegmentPrunerTest extends ControllerTest {
       int numPartitions, int partitionId) {
     SegmentZKMetadata segmentZKMetadata = new SegmentZKMetadata(segment);
     segmentZKMetadata.setPartitionMetadata(new SegmentPartitionMetadata(Collections.singletonMap(PARTITION_COLUMN,
-        new ColumnPartitionMetadata(partitionFunction, numPartitions, Collections.singleton(partitionId)))));
+        new ColumnPartitionMetadata(partitionFunction, numPartitions, Collections.singleton(partitionId), null))));
     ZKMetadataProvider.setSegmentZKMetadata(_propertyStore, tableNameWithType, segmentZKMetadata);
   }
 

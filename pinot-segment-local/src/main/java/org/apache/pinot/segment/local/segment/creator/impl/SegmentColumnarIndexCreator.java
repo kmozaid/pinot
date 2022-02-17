@@ -640,6 +640,11 @@ public class SegmentColumnarIndexCreator implements SegmentCreator {
       properties.setProperty(getKeyFor(column, PARTITION_FUNCTION), partitionFunction.getName());
       properties.setProperty(getKeyFor(column, NUM_PARTITIONS), columnIndexCreationInfo.getNumPartitions());
       properties.setProperty(getKeyFor(column, PARTITION_VALUES), columnIndexCreationInfo.getPartitions());
+      if (partitionFunction.getFunctionConfig() != null) {
+        for (Map.Entry<String, String> entry : partitionFunction.getFunctionConfig().entrySet()) {
+          properties.setProperty(getKeyFor(column, String.format("%s.%s", PARTITION_FUNCTION_CONFIG, entry.getKey())), entry.getValue());
+        }
+      }
     }
 
     // datetime field
