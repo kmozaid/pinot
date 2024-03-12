@@ -20,6 +20,7 @@ package org.apache.pinot.segment.local.indexsegment.mutable;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import com.mchange.lang.DoubleUtils;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import java.io.Closeable;
 import java.io.File;
@@ -165,6 +166,7 @@ public class MutableSegmentImpl implements MutableSegment {
   private final PartitionUpsertMetadataManager _partitionUpsertMetadataManager;
   private final List<String> _upsertComparisonColumns;
   private final String _deleteRecordColumn;
+  private final String _metadataTTLRecordColumn;
   private final String _upsertOutOfOrderRecordColumn;
   private final boolean _upsertDropOutOfOrderRecord;
   // The valid doc ids are maintained locally instead of in the upsert metadata manager because:
@@ -383,6 +385,7 @@ public class MutableSegmentImpl implements MutableSegment {
       _upsertComparisonColumns =
           upsertComparisonColumns != null ? upsertComparisonColumns : Collections.singletonList(_timeColumnName);
       _deleteRecordColumn = config.getUpsertDeleteRecordColumn();
+      _metadataTTLRecordColumn = config.getUpsertMetadataTTLRecordColumn();
       _upsertOutOfOrderRecordColumn = config.getUpsertOutOfOrderRecordColumn();
       _upsertDropOutOfOrderRecord = config.isUpsertDropOutOfOrderRecord();
       _validDocIds = new ThreadSafeMutableRoaringBitmap();
@@ -394,6 +397,7 @@ public class MutableSegmentImpl implements MutableSegment {
     } else {
       _upsertComparisonColumns = null;
       _deleteRecordColumn = null;
+      _metadataTTLRecordColumn = null;
       _validDocIds = null;
       _queryableDocIds = null;
       _upsertOutOfOrderRecordColumn = null;
@@ -560,7 +564,8 @@ public class MutableSegmentImpl implements MutableSegment {
     PrimaryKey primaryKey = row.getPrimaryKey(_schema.getPrimaryKeyColumns());
     Comparable comparisonValue = getComparisonValue(row);
     boolean deleteRecord = _deleteRecordColumn != null && BooleanUtils.toBoolean(row.getValue(_deleteRecordColumn));
-    return new RecordInfo(primaryKey, docId, comparisonValue, deleteRecord);
+    double metadataTTLRecord = _metadataTTLRecordColumn != null ? Double.parseDouble(row.getValue(_metadataTTLRecordColumn).toString()) : 0;
+    return new RecordInfo(primaryKey, docId, comparisonValue, deleteRecord, metadataTTLRecord);
   }
 
   private Comparable getComparisonValue(GenericRow row) {

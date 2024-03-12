@@ -81,9 +81,10 @@ public class UpsertUtils {
     private final PrimaryKeyReader _primaryKeyReader;
     private final ComparisonColumnReader _comparisonColumnReader;
     private final PinotSegmentColumnReader _deleteRecordColumnReader;
+    private final PinotSegmentColumnReader _metadataTTLRecordColumnReader;
 
     public RecordInfoReader(IndexSegment segment, List<String> primaryKeyColumns, List<String> comparisonColumns,
-        @Nullable String deleteRecordColumn) {
+        @Nullable String deleteRecordColumn, @Nullable String metadataTTLRecordColumn) {
       _primaryKeyReader = new PrimaryKeyReader(segment, primaryKeyColumns);
       if (comparisonColumns.size() == 1) {
         _comparisonColumnReader = new SingleComparisonColumnReader(segment, comparisonColumns.get(0));
@@ -95,6 +96,11 @@ public class UpsertUtils {
       } else {
         _deleteRecordColumnReader = null;
       }
+      if (metadataTTLRecordColumn != null) {
+        _metadataTTLRecordColumnReader = new PinotSegmentColumnReader(segment, metadataTTLRecordColumn);
+      } else {
+        _metadataTTLRecordColumnReader = null;
+      }
     }
 
     public RecordInfo getRecordInfo(int docId) {
@@ -102,7 +108,9 @@ public class UpsertUtils {
       Comparable comparisonValue = _comparisonColumnReader.getComparisonValue(docId);
       boolean deleteRecord = _deleteRecordColumnReader != null
           && BooleanUtils.toBoolean(_deleteRecordColumnReader.getValue(docId));
-      return new RecordInfo(primaryKey, docId, comparisonValue, deleteRecord);
+      double metadataTTLRecord = _metadataTTLRecordColumnReader != null ?
+          (double)_metadataTTLRecordColumnReader.getValue(docId) : 0;
+      return new RecordInfo(primaryKey, docId, comparisonValue, deleteRecord, metadataTTLRecord);
     }
 
     @Override

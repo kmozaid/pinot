@@ -69,6 +69,7 @@ public abstract class BaseTableUpsertMetadataManager implements TableUpsertMetad
     }
 
     String deleteRecordColumn = upsertConfig.getDeleteRecordColumn();
+    String metadataTTLRecordColumn = upsertConfig.getMetadataTTLRecordColumn();
     HashFunction hashFunction = upsertConfig.getHashFunction();
     boolean enableSnapshot = upsertConfig.isEnableSnapshot();
     boolean enablePreload = upsertConfig.isEnablePreload();
@@ -77,7 +78,7 @@ public abstract class BaseTableUpsertMetadataManager implements TableUpsertMetad
     File tableIndexDir = tableDataManager.getTableDataDir();
     _context = new UpsertContext.Builder().setTableConfig(tableConfig).setSchema(schema)
         .setPrimaryKeyColumns(primaryKeyColumns).setComparisonColumns(comparisonColumns)
-        .setDeleteRecordColumn(deleteRecordColumn).setHashFunction(hashFunction)
+        .setDeleteRecordColumn(deleteRecordColumn).setMetadataTTLRecordColumn(metadataTTLRecordColumn).setHashFunction(hashFunction)
         .setPartialUpsertHandler(partialUpsertHandler).setEnableSnapshot(enableSnapshot).setEnablePreload(enablePreload)
         .setMetadataTTL(metadataTTL).setDeletedKeysTTL(deletedKeysTTL).setTableIndexDir(tableIndexDir)
         .setTableDataManager(tableDataManager).build();

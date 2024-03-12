@@ -250,7 +250,7 @@ public class BasePartitionUpsertMetadataManagerTest {
     int numRecords = primaryKeys.length;
     List<RecordInfo> recordInfoList = new ArrayList<>();
     for (int docId = 0; docId < numRecords; docId++) {
-      recordInfoList.add(new RecordInfo(makePrimaryKey(primaryKeys[docId]), docId, timestamps[docId], false));
+      recordInfoList.add(new RecordInfo(makePrimaryKey(primaryKeys[docId]), docId, timestamps[docId], false, 0));
     }
     // Resolve comparison ties
     Iterator<RecordInfo> deDuplicatedRecords =

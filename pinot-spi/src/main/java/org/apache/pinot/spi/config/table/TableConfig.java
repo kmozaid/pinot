@@ -394,6 +394,12 @@ public class TableConfig extends BaseJsonConfig {
 
   @JsonIgnore
   @Nullable
+  public String getUpsertMetadataTTLRecordColumn() {
+    return _upsertConfig == null ? null : _upsertConfig.getMetadataTTLRecordColumn();
+  }
+
+  @JsonIgnore
+  @Nullable
   public String getOutOfOrderRecordColumn() {
     return _upsertConfig == null ? null : _upsertConfig.getOutOfOrderRecordColumn();
   }
