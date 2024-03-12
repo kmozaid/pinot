@@ -91,7 +91,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
               if (currentSegment == segment) {
                 if (comparisonResult >= 0) {
                   replaceDocId(validDocIds, queryableDocIds, currentDocId, newDocId, recordInfo);
-                  return new RecordLocation(segment, newDocId, newComparisonValue);
+                  return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
                 } else {
                   return currentRecordLocation;
                 }
@@ -109,7 +109,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
                   if (validDocIdsForOldSegment != null) {
                     validDocIdsForOldSegment.remove(currentDocId);
                   }
-                  return new RecordLocation(segment, newDocId, newComparisonValue);
+                  return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
                 } else {
                   return currentRecordLocation;
                 }
@@ -122,7 +122,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
                 numKeysInWrongSegment.getAndIncrement();
                 if (comparisonResult >= 0) {
                   addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
-                  return new RecordLocation(segment, newDocId, newComparisonValue);
+                  return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
                 } else {
                   return currentRecordLocation;
                 }
@@ -138,14 +138,14 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
                   currentSegmentName))) {
                 removeDocId(currentSegment, currentDocId);
                 addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
-                return new RecordLocation(segment, newDocId, newComparisonValue);
+                return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
               } else {
                 return currentRecordLocation;
               }
             } else {
               // New primary key
               addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
-              return new RecordLocation(segment, newDocId, newComparisonValue);
+              return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
             }
           });
     }
@@ -166,7 +166,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
       Comparable newComparisonValue = recordInfo.getComparisonValue();
       addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
       _primaryKeyToRecordLocationMap.put(HashUtils.hashPrimaryKey(recordInfo.getPrimaryKey(), _hashFunction),
-          new RecordLocation(segment, newDocId, newComparisonValue));
+          new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord()));
     }
   }
 
@@ -243,7 +243,9 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
 
     _primaryKeyToRecordLocationMap.forEach((primaryKey, recordLocation) -> {
       double comparisonValue = ((Number) recordLocation.getComparisonValue()).doubleValue();
-      if (_metadataTTL > 0 && comparisonValue < metadataTTLKeysThreshold) {
+      double metadataTTLRecord = recordLocation.getMetadataTTL();
+      if ((_metadataTTL > 0 && comparisonValue < metadataTTLKeysThreshold) ||
+          metadataTTLRecord > 0 && comparisonValue < (largestSeenComparisonValue - metadataTTLRecord)) {
         _primaryKeyToRecordLocationMap.remove(primaryKey, recordLocation);
         numMetadataTTLKeysRemoved.getAndIncrement();
       } else if (_deletedKeysTTL > 0 && comparisonValue < deletedKeysThreshold) {
@@ -306,7 +308,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
                 removeDocId(currentSegment, currentDocId);
                 addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
               }
-              return new RecordLocation(segment, newDocId, newComparisonValue);
+              return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
             } else {
               // Out-of-order record
               handleOutOfOrderEvent(currentRecordLocation.getComparisonValue(), recordInfo.getComparisonValue());
@@ -316,7 +318,7 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
           } else {
             // New primary key
             addDocId(validDocIds, queryableDocIds, newDocId, recordInfo);
-            return new RecordLocation(segment, newDocId, newComparisonValue);
+            return new RecordLocation(segment, newDocId, newComparisonValue, recordInfo.getMetadataTTLRecord());
           }
         });
 
@@ -353,11 +355,13 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
     private final IndexSegment _segment;
     private final int _docId;
     private final Comparable _comparisonValue;
+    private final double _metadataTTL;
 
-    public RecordLocation(IndexSegment indexSegment, int docId, Comparable comparisonValue) {
+    public RecordLocation(IndexSegment indexSegment, int docId, Comparable comparisonValue, double metadataTTL) {
       _segment = indexSegment;
       _docId = docId;
       _comparisonValue = comparisonValue;
+      _metadataTTL = metadataTTL;
     }
 
     public IndexSegment getSegment() {
@@ -370,6 +374,10 @@ public class ConcurrentMapPartitionUpsertMetadataManager extends BasePartitionUp
 
     public Comparable getComparisonValue() {
       return _comparisonValue;
+    }
+
+    public double getMetadataTTL() {
+      return _metadataTTL;
     }
   }
 }

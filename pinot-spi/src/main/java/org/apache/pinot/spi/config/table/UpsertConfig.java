@@ -66,6 +66,9 @@ public class UpsertConfig extends BaseJsonConfig {
   @JsonPropertyDescription("Whether to use TTL for upsert metadata cleanup, it uses the same unit as comparison col")
   private double _metadataTTL;
 
+  @JsonPropertyDescription("TTL column for upsert metadata cleanup for a record instead of using global metadataTTL")
+  private String _metadataTTLRecordColumn;
+
   @JsonPropertyDescription("TTL for upsert metadata cleanup for deleted keys, it uses the same unit as comparison col")
   private double _deletedKeysTTL;
 
@@ -130,6 +133,10 @@ public class UpsertConfig extends BaseJsonConfig {
 
   public double getMetadataTTL() {
     return _metadataTTL;
+  }
+
+  public String getMetadataTTLRecordColumn() {
+    return _metadataTTLRecordColumn;
   }
 
   public double getDeletedKeysTTL() {
@@ -212,6 +219,10 @@ public class UpsertConfig extends BaseJsonConfig {
 
   public void setMetadataTTL(double metadataTTL) {
     _metadataTTL = metadataTTL;
+  }
+
+  public void setMetadataTTLRecordColumn(final String metadataTTLRecordColumn) {
+    _metadataTTLRecordColumn = metadataTTLRecordColumn;
   }
 
   public void setDeletedKeysTTL(double deletedKeysTTL) {

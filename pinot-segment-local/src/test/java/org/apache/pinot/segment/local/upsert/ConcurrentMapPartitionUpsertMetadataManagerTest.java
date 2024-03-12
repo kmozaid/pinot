@@ -554,7 +554,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     List<RecordInfo> recordInfoList = new ArrayList<>();
     for (int i = 0; i < numRecords; i++) {
       recordInfoList.add(new RecordInfo(makePrimaryKey(primaryKeys[i]), i, new IntWrapper(timestamps[i]),
-          deleteRecordFlags != null && deleteRecordFlags[i]));
+          deleteRecordFlags != null && deleteRecordFlags[i], 0));
     }
     return recordInfoList;
   }
@@ -564,7 +564,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     List<RecordInfo> recordInfoList = new ArrayList<>();
     for (int i = 0; i < numRecords; i++) {
       recordInfoList.add(new RecordInfo(makePrimaryKey(primaryKeys[i]), i, new Integer(timestamps[i]),
-          deleteRecordFlags != null && deleteRecordFlags[i]));
+          deleteRecordFlags != null && deleteRecordFlags[i], 0));
     }
     return recordInfoList;
   }
@@ -578,7 +578,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     Iterator<Integer> validDocIdsIterator = validDocIdsSnapshot.iterator();
     validDocIdsIterator.forEachRemaining((docId) -> recordInfoList.add(
         new RecordInfo(makePrimaryKey(primaryKeys[docId]), docId, new IntWrapper(timestamps[docId]),
-            deleteRecordFlags != null && deleteRecordFlags[docId])));
+            deleteRecordFlags != null && deleteRecordFlags[docId], 0)));
     return recordInfoList;
   }
 
@@ -698,7 +698,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     // Update records from the second segment
     ThreadSafeMutableRoaringBitmap validDocIds2 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment2 = mockMutableSegment(1, validDocIds2, null);
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}, 2 -> {2, 100}
     // segment2: 3 -> {0, 100}
@@ -709,7 +709,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(validDocIds1.getMutableRoaringBitmap().toArray(), new int[]{0, 1, 2});
     assertEquals(validDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0});
 
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(120), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(120), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {0, 100}
@@ -720,7 +720,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(validDocIds1.getMutableRoaringBitmap().toArray(), new int[]{0, 1});
     assertEquals(validDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0, 1});
 
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(1), 2, new IntWrapper(100), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(1), 2, new IntWrapper(100), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {0, 100}
@@ -731,7 +731,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(validDocIds1.getMutableRoaringBitmap().toArray(), new int[]{0, 1});
     assertEquals(validDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0, 1});
 
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 3, new IntWrapper(100), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 3, new IntWrapper(100), false, 0));
 
     // segment1: 1 -> {1, 120}
     // segment2: 0 -> {3, 100}, 2 -> {1, 120}, 3 -> {0, 100}
@@ -746,7 +746,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     upsertMetadataManager.stop();
 
     // Add record should be no-op
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 4, new IntWrapper(120), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 4, new IntWrapper(120), false, 0));
     // segment1: 1 -> {1, 120}
     // segment2: 0 -> {3, 100}, 2 -> {1, 120}, 3 -> {0, 100}
     checkRecordLocation(recordLocationMap, 0, segment2, 3, 100, hashFunction);
@@ -792,7 +792,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
 
     // new record, should return false for out of order event
     boolean isOutOfOrderRecord =
-        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false));
+        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false, 0));
     assertFalse(isOutOfOrderRecord);
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}, 2 -> {2, 100}
@@ -806,12 +806,12 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
 
     // send an out-of-order event, should return true for orderness of event
     isOutOfOrderRecord =
-        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(80), false));
+        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(80), false, 0));
     assertTrue(isOutOfOrderRecord);
 
     // ordered event for an existing key
     isOutOfOrderRecord =
-        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(150), false));
+        !upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(150), false, 0));
     assertFalse(isOutOfOrderRecord);
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
@@ -912,7 +912,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     ThreadSafeMutableRoaringBitmap validDocIds2 = new ThreadSafeMutableRoaringBitmap();
     ThreadSafeMutableRoaringBitmap queryableDocIds2 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment2 = mockMutableSegment(1, validDocIds2, queryableDocIds2);
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new IntWrapper(100), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}, 2 -> {2, 100}
     // segment2: 3 -> {0, 100}
@@ -926,7 +926,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(queryableDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0});
 
     // Mark a record with latest value in segment1 as deleted
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(120), true));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new IntWrapper(120), true, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {0, 100}
@@ -940,7 +940,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(queryableDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0});
 
     // Mark a record with latest value in segment2 as deleted
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 2, new IntWrapper(150), true));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 2, new IntWrapper(150), true, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {2, 150}
@@ -954,7 +954,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(queryableDocIds2.getMutableRoaringBitmap().toArray(), new int[]{});
 
     // Revive a deleted primary key (by providing a larger comparisonValue)
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 3, new IntWrapper(200), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 3, new IntWrapper(200), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {3, 200}
@@ -971,7 +971,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     upsertMetadataManager.stop();
 
     // Add record should be no-op
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 4, new IntWrapper(120), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(0), 4, new IntWrapper(120), false, 0));
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {3, 200}
     checkRecordLocation(recordLocationMap, 0, segment1, 0, 100, hashFunction);
@@ -1019,7 +1019,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     ThreadSafeMutableRoaringBitmap validDocIds2 = new ThreadSafeMutableRoaringBitmap();
     ThreadSafeMutableRoaringBitmap queryableDocIds2 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment2 = mockMutableSegment(1, validDocIds2, queryableDocIds2);
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new Integer(100), false));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 0, new Integer(100), false, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}, 2 -> {2, 100}
     // segment2: 3 -> {0, 100}
@@ -1033,7 +1033,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(queryableDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0});
 
     // Mark a record with latest value in segment1 as deleted (outside TTL-window)
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new Integer(120), true));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(2), 1, new Integer(120), true, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {0, 100}
@@ -1047,7 +1047,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(queryableDocIds2.getMutableRoaringBitmap().toArray(), new int[]{0});
 
     // Mark a record with latest value in segment2 as deleted (within TTL window)
-    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 2, new Integer(150), true));
+    upsertMetadataManager.addRecord(segment2, new RecordInfo(makePrimaryKey(3), 2, new Integer(150), true, 0));
 
     // segment1: 0 -> {0, 100}, 1 -> {1, 120}
     // segment2: 2 -> {1, 120}, 3 -> {2, 150}
@@ -1088,7 +1088,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     // Add record to update largestSeenTimestamp, largest seen timestamp: earlierComparisonValue
     ThreadSafeMutableRoaringBitmap validDocIds0 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment0 = mockMutableSegment(1, validDocIds0, null);
-    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, earlierComparisonValue, false));
+    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, earlierComparisonValue, false, 0));
     checkRecordLocationForTTL(recordLocationMap, 10, segment0, 1, 80, HashFunction.NONE);
 
     // Add a segment with segmentEndTime = earlierComparisonValue, so it will not be skipped
@@ -1116,7 +1116,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     checkRecordLocationForTTL(recordLocationMap, 10, segment0, 1, 80, HashFunction.NONE);
 
     // Add record to update largestSeenTimestamp, largest seen timestamp: largerComparisonValue
-    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 0, largerComparisonValue, false));
+    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 0, largerComparisonValue, false, 0));
     assertEquals(recordLocationMap.size(), 5);
     checkRecordLocationForTTL(recordLocationMap, 0, segment1, 0, 100, HashFunction.NONE);
     checkRecordLocationForTTL(recordLocationMap, 1, segment1, 1, 100, HashFunction.NONE);
@@ -1152,7 +1152,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     // Add record to update largestSeenTimestamp, largest seen timestamp: 80
     ThreadSafeMutableRoaringBitmap validDocIds0 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment0 = mockMutableSegment(1, validDocIds0, null);
-    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, new Double(80), false));
+    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, new Double(80), false, 0));
     checkRecordLocationForTTL(recordLocationMap, 10, segment0, 1, 80, HashFunction.NONE);
 
     // Add a segment with segmentEndTime = 80, so it will not be skipped
@@ -1180,7 +1180,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     assertEquals(validDocIds1.getMutableRoaringBitmap().toArray(), new int[]{0, 1, 2, 3});
 
     // Add record to update largestSeenTimestamp, largest seen timestamp: 120
-    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(0), 0, new Double(120), false));
+    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(0), 0, new Double(120), false, 0));
     assertEquals(validDocIds1.getMutableRoaringBitmap().toArray(), new int[]{1, 2, 3});
     assertEquals(recordLocationMap.size(), 5);
     checkRecordLocationForTTL(recordLocationMap, 0, segment0, 0, 120, HashFunction.NONE);
@@ -1329,7 +1329,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     // Add record to update largestSeenTimestamp, largest seen timestamp: comparisonValue
     ThreadSafeMutableRoaringBitmap validDocIds0 = new ThreadSafeMutableRoaringBitmap();
     MutableSegment segment0 = mockMutableSegment(1, validDocIds0, null);
-    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, comparisonValue, false));
+    upsertMetadataManager.addRecord(segment0, new RecordInfo(makePrimaryKey(10), 1, comparisonValue, false, 0));
     checkRecordLocationForTTL(recordLocationMap, 10, segment0, 1, 80, HashFunction.NONE);
 
     // add a segment with segmentEndTime = -1 so it will be skipped since it out-of-TTL
@@ -1361,7 +1361,7 @@ public class ConcurrentMapPartitionUpsertMetadataManagerTest {
     List<RecordInfo> recordInfoList = new ArrayList<>();
     for (int i = 0; i < numRecords; i++) {
       recordInfoList.add(
-          new RecordInfo(makePrimaryKey(primaryKeys[i]), i, new Double(timestamps[i].doubleValue()), false));
+          new RecordInfo(makePrimaryKey(primaryKeys[i]), i, new Double(timestamps[i].doubleValue()), false, 0));
     }
     return recordInfoList;
   }

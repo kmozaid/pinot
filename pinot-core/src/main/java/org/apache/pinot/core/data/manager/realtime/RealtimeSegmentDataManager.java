@@ -1491,6 +1491,7 @@ public class RealtimeSegmentDataManager extends SegmentDataManager {
             .setPartitionDedupMetadataManager(partitionDedupMetadataManager)
             .setUpsertComparisonColumns(tableConfig.getUpsertComparisonColumns())
             .setUpsertDeleteRecordColumn(tableConfig.getUpsertDeleteRecordColumn())
+            .setUpsertMetadataTTLRecordColumn(tableConfig.getUpsertMetadataTTLRecordColumn())
             .setUpsertOutOfOrderRecordColumn(tableConfig.getOutOfOrderRecordColumn())
             .setUpsertDropOutOfOrderRecord(tableConfig.isDropOutOfOrderRecord())
             .setFieldConfigList(tableConfig.getFieldConfigList());
