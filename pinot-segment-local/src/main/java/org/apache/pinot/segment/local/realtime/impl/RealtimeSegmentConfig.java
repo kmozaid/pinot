@@ -63,6 +63,7 @@ public class RealtimeSegmentConfig {
   private final UpsertConfig.Mode _upsertMode;
   private final List<String> _upsertComparisonColumns;
   private final String _upsertDeleteRecordColumn;
+  private final String _upsertMetadataTTLRecordColumn;
   private final String _upsertOutOfOrderRecordColumn;
   private final boolean _upsertDropOutOfOrderRecord;
   private final PartitionUpsertMetadataManager _partitionUpsertMetadataManager;
@@ -78,7 +79,7 @@ public class RealtimeSegmentConfig {
       PinotDataBufferMemoryManager memoryManager, RealtimeSegmentStatsHistory statsHistory, String partitionColumn,
       PartitionFunction partitionFunction, int partitionId, boolean aggregateMetrics, boolean nullHandlingEnabled,
       String consumerDir, UpsertConfig.Mode upsertMode, List<String> upsertComparisonColumns,
-      String upsertDeleteRecordColumn, String upsertOutOfOrderRecordColumn, boolean upsertDropOutOfOrderRecord,
+      String upsertDeleteRecordColumn, String upsertMetadataTTLRecordColumn, String upsertOutOfOrderRecordColumn, boolean upsertDropOutOfOrderRecord,
       PartitionUpsertMetadataManager partitionUpsertMetadataManager,
       PartitionDedupMetadataManager partitionDedupMetadataManager, List<FieldConfig> fieldConfigList,
       List<AggregationConfig> ingestionAggregationConfigs) {
@@ -103,6 +104,7 @@ public class RealtimeSegmentConfig {
     _upsertMode = upsertMode != null ? upsertMode : UpsertConfig.Mode.NONE;
     _upsertComparisonColumns = upsertComparisonColumns;
     _upsertDeleteRecordColumn = upsertDeleteRecordColumn;
+    _upsertMetadataTTLRecordColumn = upsertMetadataTTLRecordColumn;
     _upsertOutOfOrderRecordColumn = upsertOutOfOrderRecordColumn;
     _upsertDropOutOfOrderRecord = upsertDropOutOfOrderRecord;
     _partitionUpsertMetadataManager = partitionUpsertMetadataManager;
@@ -200,6 +202,10 @@ public class RealtimeSegmentConfig {
     return _upsertDeleteRecordColumn;
   }
 
+  public String getUpsertMetadataTTLRecordColumn() {
+    return _upsertMetadataTTLRecordColumn;
+  }
+
   public String getUpsertOutOfOrderRecordColumn() {
     return _upsertOutOfOrderRecordColumn;
   }
@@ -246,6 +252,7 @@ public class RealtimeSegmentConfig {
     private UpsertConfig.Mode _upsertMode;
     private List<String> _upsertComparisonColumns;
     private String _upsertDeleteRecordColumn;
+    private String _upsertMetadataTTLRecordColumn;
     private String _upsertOutOfOrderRecordColumn;
     private boolean _upsertDropOutOfOrderRecord;
     private PartitionUpsertMetadataManager _partitionUpsertMetadataManager;
@@ -388,6 +395,12 @@ public class RealtimeSegmentConfig {
       return this;
     }
 
+    public Builder setUpsertMetadataTTLRecordColumn(String upsertMetadataTTLRecordColumn) {
+      _upsertMetadataTTLRecordColumn = upsertMetadataTTLRecordColumn;
+      return this;
+    }
+
+
     public Builder setUpsertOutOfOrderRecordColumn(String upsertOutOfOrderRecordColumn) {
       _upsertOutOfOrderRecordColumn = upsertOutOfOrderRecordColumn;
       return this;
@@ -428,7 +441,7 @@ public class RealtimeSegmentConfig {
           _capacity, _avgNumMultiValues, Collections.unmodifiableMap(indexConfigByCol), _segmentZKMetadata, _offHeap,
           _memoryManager, _statsHistory, _partitionColumn, _partitionFunction, _partitionId, _aggregateMetrics,
           _nullHandlingEnabled, _consumerDir, _upsertMode, _upsertComparisonColumns, _upsertDeleteRecordColumn,
-          _upsertOutOfOrderRecordColumn, _upsertDropOutOfOrderRecord,
+          _upsertMetadataTTLRecordColumn, _upsertOutOfOrderRecordColumn, _upsertDropOutOfOrderRecord,
           _partitionUpsertMetadataManager, _partitionDedupMetadataManager, _fieldConfigList,
           _ingestionAggregationConfigs);
     }

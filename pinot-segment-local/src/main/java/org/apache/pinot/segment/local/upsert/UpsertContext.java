@@ -35,6 +35,7 @@ public class UpsertContext {
   private final List<String> _primaryKeyColumns;
   private final List<String> _comparisonColumns;
   private final String _deleteRecordColumn;
+  private final String _metadataTTLRecordColumn;
   private final HashFunction _hashFunction;
   private final PartialUpsertHandler _partialUpsertHandler;
   private final boolean _enableSnapshot;
@@ -45,7 +46,7 @@ public class UpsertContext {
   private final TableDataManager _tableDataManager;
 
   private UpsertContext(TableConfig tableConfig, Schema schema, List<String> primaryKeyColumns,
-      List<String> comparisonColumns, @Nullable String deleteRecordColumn, HashFunction hashFunction,
+      List<String> comparisonColumns, @Nullable String deleteRecordColumn, String metadataTTLRecordColumn, HashFunction hashFunction,
       @Nullable PartialUpsertHandler partialUpsertHandler, boolean enableSnapshot, boolean enablePreload,
       double metadataTTL, double deletedKeysTTL, File tableIndexDir, @Nullable TableDataManager tableDataManager) {
     _tableConfig = tableConfig;
@@ -53,6 +54,7 @@ public class UpsertContext {
     _primaryKeyColumns = primaryKeyColumns;
     _comparisonColumns = comparisonColumns;
     _deleteRecordColumn = deleteRecordColumn;
+    _metadataTTLRecordColumn = metadataTTLRecordColumn;
     _hashFunction = hashFunction;
     _partialUpsertHandler = partialUpsertHandler;
     _enableSnapshot = enableSnapshot;
@@ -81,6 +83,10 @@ public class UpsertContext {
 
   public String getDeleteRecordColumn() {
     return _deleteRecordColumn;
+  }
+
+  public String getMetadataTTLRecordColumn() {
+    return _metadataTTLRecordColumn;
   }
 
   public HashFunction getHashFunction() {
@@ -121,6 +127,7 @@ public class UpsertContext {
     private List<String> _primaryKeyColumns;
     private List<String> _comparisonColumns;
     private String _deleteRecordColumn;
+    private String _metadataTTLRecordColumn;
     private HashFunction _hashFunction = HashFunction.NONE;
     private PartialUpsertHandler _partialUpsertHandler;
     private boolean _enableSnapshot;
@@ -152,6 +159,11 @@ public class UpsertContext {
 
     public Builder setDeleteRecordColumn(String deleteRecordColumn) {
       _deleteRecordColumn = deleteRecordColumn;
+      return this;
+    }
+
+    public Builder setMetadataTTLRecordColumn(String metadataTTLRecordColumn) {
+      _metadataTTLRecordColumn = metadataTTLRecordColumn;
       return this;
     }
 
@@ -202,7 +214,7 @@ public class UpsertContext {
       Preconditions.checkState(CollectionUtils.isNotEmpty(_comparisonColumns), "Comparison columns must be set");
       Preconditions.checkState(_hashFunction != null, "Hash function must be set");
       Preconditions.checkState(_tableIndexDir != null, "Table index directory must be set");
-      return new UpsertContext(_tableConfig, _schema, _primaryKeyColumns, _comparisonColumns, _deleteRecordColumn,
+      return new UpsertContext(_tableConfig, _schema, _primaryKeyColumns, _comparisonColumns, _deleteRecordColumn, _metadataTTLRecordColumn,
           _hashFunction, _partialUpsertHandler, _enableSnapshot, _enablePreload, _metadataTTL, _deletedKeysTTL,
           _tableIndexDir, _tableDataManager);
     }

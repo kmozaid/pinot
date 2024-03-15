@@ -89,6 +89,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
   protected final List<String> _primaryKeyColumns;
   protected final List<String> _comparisonColumns;
   protected final String _deleteRecordColumn;
+  protected final String _metadataTTLRecordColumn;
   protected final HashFunction _hashFunction;
   protected final PartialUpsertHandler _partialUpsertHandler;
   protected final boolean _enableSnapshot;
@@ -128,6 +129,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     _primaryKeyColumns = context.getPrimaryKeyColumns();
     _comparisonColumns = context.getComparisonColumns();
     _deleteRecordColumn = context.getDeleteRecordColumn();
+    _metadataTTLRecordColumn = context.getMetadataTTLRecordColumn();
     _hashFunction = context.getHashFunction();
     _partialUpsertHandler = context.getPartialUpsertHandler();
     _enableSnapshot = context.isSnapshotEnabled();
@@ -407,7 +409,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
 
     try (UpsertUtils.RecordInfoReader recordInfoReader = new UpsertUtils.RecordInfoReader(segment, _primaryKeyColumns,
-        _comparisonColumns, _deleteRecordColumn)) {
+        _comparisonColumns, _deleteRecordColumn, _metadataTTLRecordColumn)) {
       Iterator<RecordInfo> recordInfoIterator;
       if (validDocIds != null) {
         recordInfoIterator = UpsertUtils.getRecordInfoIterator(recordInfoReader, validDocIds);
@@ -478,7 +480,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
 
     try (UpsertUtils.RecordInfoReader recordInfoReader = new UpsertUtils.RecordInfoReader(segment, _primaryKeyColumns,
-        _comparisonColumns, _deleteRecordColumn)) {
+        _comparisonColumns, _deleteRecordColumn, _metadataTTLRecordColumn)) {
       doPreloadSegment(segment, null, null, UpsertUtils.getRecordInfoIterator(recordInfoReader, validDocIds));
     } catch (Exception e) {
       throw new RuntimeException(
@@ -606,7 +608,7 @@ public abstract class BasePartitionUpsertMetadataManager implements PartitionUps
     }
 
     try (UpsertUtils.RecordInfoReader recordInfoReader = new UpsertUtils.RecordInfoReader(segment, _primaryKeyColumns,
-        _comparisonColumns, _deleteRecordColumn)) {
+        _comparisonColumns, _deleteRecordColumn, _metadataTTLRecordColumn)) {
       Iterator<RecordInfo> recordInfoIterator =
           UpsertUtils.getRecordInfoIterator(recordInfoReader, segment.getSegmentMetadata().getTotalDocs());
       replaceSegment(segment, null, null, recordInfoIterator, oldSegment);

@@ -27,12 +27,15 @@ public class RecordInfo {
   private final int _docId;
   private final Comparable _comparisonValue;
   private final boolean _deleteRecord;
+  private final double _metadataTTLRecord;
 
-  public RecordInfo(PrimaryKey primaryKey, int docId, Comparable comparisonValue, boolean deleteRecord) {
+  public RecordInfo(PrimaryKey primaryKey, int docId, Comparable comparisonValue,
+      boolean deleteRecord, double metadataTTLRecord) {
     _primaryKey = primaryKey;
     _docId = docId;
     _comparisonValue = comparisonValue;
     _deleteRecord = deleteRecord;
+    _metadataTTLRecord = metadataTTLRecord;
   }
 
   public PrimaryKey getPrimaryKey() {
@@ -49,5 +52,9 @@ public class RecordInfo {
 
   public boolean isDeleteRecord() {
     return _deleteRecord;
+  }
+
+  public double getMetadataTTLRecord() {
+    return _metadataTTLRecord;
   }
 }
