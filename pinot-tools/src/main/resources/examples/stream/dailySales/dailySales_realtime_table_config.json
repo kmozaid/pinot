@@ -15,7 +15,8 @@
     "loadMode": "MMAP",
     "noDictionaryColumns": [
       "sales_count",
-      "total_sales"
+      "total_sales",
+      "total_items"
     ]
   },
   "ingestionConfig": {
@@ -48,6 +49,10 @@
       {
         "columnName": "sales_count",
         "aggregationFunction": "COUNT(*)"
+      },
+      {
+        "columnName": "total_items",
+        "aggregationFunction": "SUMMV(item_quantities)"
       }
     ]
   },
